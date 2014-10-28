@@ -1,16 +1,17 @@
-from Link import Link
-from Packet import Packet
-from Controller import Controller
+# TODO: use supers correctly or inherit this right
 
-class Device:
-    def __init__(self, links, device_id):
+class Device(object):
+    def __init__(self, controller, links, device_id):
         self.__device_id = device_id
+        self.__controller = controller
         self.__links = links
 
 class Host(Device):
-    def __init__(self, links, device_id):
+    def __init__(self, controller, links, device_id):
         assert (len(links) == 1)
-        Device.__init__(self, links, device_id)
+        self.__device_id = device_id
+        self.__controller = controller
+        self.__links = links
         # __flows is a map from device id values to flow
         # TODO: figure out if we need to include port numbers.
         self.__flows = {}
@@ -32,11 +33,12 @@ class Host(Device):
             delta_t = 0.1
             method = self.send_next_packet
             args = [flow]
-            EventQueue.add_event(delta_t + Controller.get_current_time(), method, args)
+            self.__controller.add_event(delta_t + self.__controller.get_current_time(), method, args)
 
     def receive_packet(self, packet):
         if (not packet.is_TCP_packet()):
             raise Exception("Faulty packet received.")
+
         sequence_number = packet.get_sequence_number()
         sending_device = packet.get_src_id()
         flow_id = packet.get_flow_id()
@@ -50,10 +52,20 @@ class Host(Device):
     # TODO: Bellman / Dijkstra code somewhere.
 
 class Router(Device):
-    def __init__(self, links, device_id,
-                 routing_table = {}):
-        Device.__init__(self, links, device_id)
+    def __init__(
+        self,
+        controller,
+        links,
+        device_id,
+        routing_table = {}
+    ):
+        self.__device_id = device_id
+        self.__controller = controller
+        self.__links = links
         self.__routing_table = routing_table
+
+    def get_device_id(self):
+        return self.__device_id
 
     def receive_packet(self, packet):
         pass

@@ -3,22 +3,24 @@ class PacketTypes:
     TCP_ACK = 1
 
 class Packet:
-    def __init__(src_id, dst_id, size, packet_type):
+
+    def __init__(self, controller, src_id, dst_id, size, packet_type):
+        self.__controller = controller
         self.__src_id = src_id
         self.__dst_id = dst_id
         self.__size = size
         self.packet_type = packet_type
 
-    def get_size():
+    def get_size(self):
         return self.__size
 
-    def get_src_id():
+    def get_src_id(self):
         return self.__src_id
 
-    def get_dst_id():
+    def get_dst_id(self):
         return self.__dst_id
 
-    def is_TCP_packet():
+    def is_TCP_packet(self):
         return (self.packet_type == PacketTypes.TCP_DATA or
                 self.packet_type == PacketTypes.TCP_ACK)
 

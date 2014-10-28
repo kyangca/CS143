@@ -1,18 +1,16 @@
 from heapq import *
-from Controller import Controller
 
-class EventQueue:
-    priority_queue = []
+class EventQueue(object):
+    
+    def __init__(self):
+        self.priority_queue = []
 
     # The given event will be executed in delta_t seconds.
-    @classmethod
-    def add_event(cls, t, method, args):
-        heappush(priority_queue, (t, method, args))
+    def add_event(self, t, method, args):
+        heappush(self.priority_queue, (t, method, args))
 
-    @classmethod
-    def pop_event(cls):
-        return heappop(priority_queue)
+    def pop_event(self):
+        return heappop(self.priority_queue)
 
-    @classmethod
-    def is_empty(cls):
-        return (len(priority_queue) == 0)
+    def is_empty(self):
+        return (len(self.priority_queue) == 0)
