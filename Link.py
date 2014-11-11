@@ -27,8 +27,14 @@ class Link:
     def bytes_in_buffer(buf):
         return sum([x.get_size() for x in buf])
 
+    def get_link_id(self):
+        return self.__link_id
+
     def get_link_delay(self):
         return self.__link_delay
+
+    def get_controller(self):
+        return self.__controller
 
     # Called after the packet is put on the wire (e.g. after 1024 / throughput seconds.
     def packet_on_wire_handler(self, rightward_direction):
@@ -36,14 +42,39 @@ class Link:
 
         if (rightward_direction):
             packet = self.__rightward_buffer.pop(0)
+            device = self.__right_device
         else:
             packet = self.__leftward_buffer.pop(0)
+            device = self.__left_device
 
         self.__controller.add_event(
             receive_time,
-            self.__right_device.receive_packet,
-            [packet],
+            device.receive_packet,
+            [self, packet],
         )
+
+    # I assume that routers can know what device is on the other end of the router.
+    # TODO: Ask Jianchi to make sure this is correct.
+    def opposite_device(self, from_device_id):
+        if (from_device_id == self.__left_device.get_device_id()):
+            return self.__right_device
+        elif (from_device_id == self.__right_device.get_device_id()):
+            return self.__left_device
+        else:
+            raise Exception("Unknown device id.")
+
+    # Returns the estimated amount of time that will be required to send a packet from the
+    # given attached device across this link.
+    def estimate_cost(self, from_device_id):
+        # TODO: Ask Jianchi how to do correct calculations.
+        if (from_device_id == self.__left_device.get_device_id()):
+            return max(0, self.__next_rightward_start_transmission_time -
+                       self.get_controller().get_current_time())
+        elif (from_device_id == self.__right_device.get_device_id()):
+            return max(0, self.__next_leftward_start_transmission_time -
+                       self.get_controller().get_current_time())            
+        else:
+            raise Exception("Invalid device id.")
 
     # Returns whether or not the request was successful.
     def queue_packet(self, from_device_id, packet):

@@ -61,6 +61,7 @@ class Controller(object):
             router_id = json_router['id']
             router_link_ids = json_router['links']
             router_links = {x: self._links[x] for x in router_link_ids}
+            bf_freq = json_router['BFfreq']
             # Get the statically generated routing table.
             if ("routing_table" in json_router):
                 routing_table = json_router["routing_table"]
@@ -70,7 +71,8 @@ class Controller(object):
                 self,
                 router_links,
                 router_id,
-                routing_table
+                bf_freq,
+                routing_table,
                 )
 
         # Now add the references to the devices onto the links
