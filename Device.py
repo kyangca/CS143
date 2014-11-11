@@ -1,29 +1,27 @@
-# TODO: use supers correctly or inherit this right
+from Flow import Flow
 
 class Device(object):
     def __init__(self, controller, links, device_id):
-        self.__device_id = device_id
-        self.__controller = controller
-        self.__links = links
+        self._device_id = device_id
+        self._controller = controller
+        self._links = links
+
+    def get_device_id(self):
+        return self._device_id
 
 class Host(Device):
     def __init__(self, controller, links, device_id):
         assert (len(links) == 1)
-        self.__device_id = device_id
-        self.__controller = controller
-        self.__links = links
-        # __flows is a map from device id values to flow
+        super().__init__(controller, links, device_id)
+        # _flows is a map from device id values to flow
         # TODO: figure out if we need to include port numbers.
-        self.__flows = {}
+        self._flows = {}
 
     def get_link(self):
-        return self.__links[0]
+        return self._links[0]
 
     def add_flow(self, flow_id, flow):
-        self.__flows[flow_id] = flow
-
-    def get_device_id(self):
-        return self.__device_id
+        self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
         packet = flow.construct_next_packet()
@@ -33,7 +31,7 @@ class Host(Device):
             delta_t = 0.1
             method = self.send_next_packet
             args = [flow]
-            self.__controller.add_event(delta_t + self.__controller.get_current_time(), method, args)
+            self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
 
     def receive_packet(self, packet):
         if (not packet.is_TCP_packet()):
@@ -42,10 +40,10 @@ class Host(Device):
         sequence_number = packet.get_sequence_number()
         sending_device = packet.get_src_id()
         flow_id = packet.get_flow_id()
-        if (not self.__flows.has_key(flow_id)):
-            # Add the new flow to the host's __flows collection.
+        if flow_id not in self._flows:
+            # Add the new flow to the host's _flows collection.
             # TODO: figure out where to get flow numbers.
-            flow = Flow(sending_device, self.get_device_id(), flow_id)
+            flow = Flow(self._controller, sending_device, self.get_device_id(), flow_id)
             self.add_flow(flow_id, flow)
         # TODO: add acknowledgements.
 
@@ -59,13 +57,8 @@ class Router(Device):
         device_id,
         routing_table = {}
     ):
-        self.__device_id = device_id
-        self.__controller = controller
-        self.__links = links
-        self.__routing_table = routing_table
-
-    def get_device_id(self):
-        return self.__device_id
+        super().__init__(controller, links, device_id)
+        self._routing_table = routing_table
 
     def receive_packet(self, packet):
         pass

@@ -32,31 +32,28 @@ class Link:
 
     # Called after the packet is put on the wire (e.g. after 1024 / throughput seconds.
     def packet_on_wire_handler(self, rightward_direction):
+        receive_time = self.__link_delay + self.__controller.get_current_time()
+
         if (rightward_direction):
             packet = self.__rightward_buffer.pop(0)
-            t = self.__link_delay + self.__controller.get_current_time()
-            self.__controller.add_event(
-                delay_time + self.__controller.get_current_time(),
-                self.__right_device.receive_packet,
-                [packet],
-            )
         else:
             packet = self.__leftward_buffer.pop(0)
-            self.__controller.add_event(
-                delay_time,
-                self.__left_device.receive_packet,
-                [packet]
-            )
+
+        self.__controller.add_event(
+            receive_time,
+            self.__right_device.receive_packet,
+            [packet],
+        )
 
     # Returns whether or not the request was successful.
     def queue_packet(self, from_device_id, packet):
+        # update transmission times in case we haven't done things in a while
         self.__next_rightward_start_transmission_time = \
             max(self.__next_rightward_start_transmission_time, self.__controller.get_current_time())
         self.__next_leftward_start_transmission_time = \
             max(self.__next_leftward_start_transmission_time, self.__controller.get_current_time())
 
-        buf = None
-        rightward_direction = None
+        # figure out direction and buffer
         if (from_device_id == self.__left_device.get_device_id()):
             buf = self.__rightward_buffer
             rightward_direction = True
@@ -66,21 +63,25 @@ class Link:
         else:
             raise Exception("Invalid device id")
 
-        if (self.__buffer_size - self.bytes_in_buffer(buf) > packet.get_size()):
+        # Reject if buffer full
+        if (self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size()):
             return False
+
+        # Put packet in buffer and add packet on wire event
         buf.append(packet)
         transmission_time = float(packet.get_size()) / self.get_throughput()
         if (rightward_direction):
             # Add an event for when the packet is on the wire.
             self.__next_rightward_start_transmission_time += transmission_time
-            self.__next_leftward_start_transmission_time += transmission_time + self.get_link_delay()
+            self.__next_leftward_start_transmission_time += self.__next_rightward_start_transmission_time + self.get_link_delay()
             self.__controller.add_event(self.__next_rightward_start_transmission_time,
                                  self.packet_on_wire_handler, [True])
         else:
-            self.__next_rightward_start_transmission_time += transmission_time + self.get_link_delay()
             self.__next_leftward_start_transmission_time += transmission_time
+            self.__next_rightward_start_transmission_time += self.__next_leftward_start_transmission_time + self.get_link_delay()
             self.__controller.add_event(self.__next_leftward_start_transmission_time,
                                  self.packet_on_wire_handler, [False])
+
         return True
 
     def set_left_device(self, device):

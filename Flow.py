@@ -1,4 +1,5 @@
-from Packet import Packet
+from Packet import TCPPacket
+from Packet import PacketTypes
 
 # A flow represents the transfer of data from one host to another.
 class Flow:
@@ -10,6 +11,7 @@ class Flow:
         self.__num_remaining_bytes = num_bytes
         self.__sent_bytes = 0
         self.__flow_id = flow_id
+        self.__tcp_sequence_number = 0
 
     # Returns whether or not the flow should continue ad infinitum.
     def is_infinite_flow(self):
@@ -36,4 +38,9 @@ class Flow:
         user_bytes = min(1024, self.num_remaining_bytes())
         self.__num_remaining_bytes -= user_bytes
         self.__sent_bytes += user_bytes
-        return Packet(self.__controller, self.get_src_id(), self.get_dst_id(), user_bytes, 'flow')
+        packet_type = PacketTypes.TCP_DATA
+        sequence_number = self.__tcp_sequence_number
+        self.__tcp_sequence_number += 1
+        return TCPPacket(self.__controller, self.get_src_id(),
+                self.get_dst_id(), user_bytes, packet_type,
+                sequence_number, self.get_flow_id())
