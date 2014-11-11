@@ -18,7 +18,7 @@ class Host(Device):
         self._flows = {}
 
     def get_link(self):
-        return self._links[0]
+        return next(iter(self._links.values()))
 
     def add_flow(self, flow_id, flow):
         self._flows[flow_id] = flow
@@ -46,6 +46,7 @@ class Host(Device):
             flow = Flow(self._controller, sending_device, self.get_device_id(), flow_id)
             self.add_flow(flow_id, flow)
         # TODO: add acknowledgements.
+        return True
 
     # TODO: Bellman / Dijkstra code somewhere.
 
@@ -60,6 +61,21 @@ class Router(Device):
         super().__init__(controller, links, device_id)
         self._routing_table = routing_table
 
+    def get_link(self, link_id):
+        return self._links[link_id]
+
     def receive_packet(self, packet):
-        pass
+        if packet.is_TCP_packet():
+            # Route the packet.
+            dst_id = packet.get_dst_id()
+            if (not dst_id in self._routing_table):
+                # Drop the packet.
+                return False
+            link = self.get_link(self._routing_table[dst_id])
+            link.queue_packet(self.get_device_id(), packet)
+        else:
+            # TODO: add support for dynamic routing protocol packet types (i.e.
+            # support the Bellman Ford packets).
+            raise Exception("Unsupported packet type")
+        return True
 

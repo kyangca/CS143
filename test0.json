@@ -1,13 +1,14 @@
 {
     "hosts": [
-	{"id": 1, "links": [1]},
-	{"id": 2, "links": [1]}
+	{"id": "H1", "links": ["L1"]},
+	{"id": "H2", "links": ["L1"]}
     ],
     "links": [
-	{"id": 1, "left_device_id": 1, "right_device_id": 2,
+	{"id": "L1", "left_device_id": "H1", "right_device_id": "H2",
 	 "throughput": 10000000, "link_delay": 0.01, "buffer_size": 64000}
     ],
     "flows": [
-	{"id": 1, "src_id": 1, "dst_id": 2, "num_bytes": 20000000, "start_time": 1.0}
-    ]
+	{"id": "F1", "src_id": "H1", "dst_id": "H2", "num_bytes": 20000000, "start_time": 1.0}
+    ],
+    "routers": []
 }
