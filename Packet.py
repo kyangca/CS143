@@ -15,6 +15,9 @@ class Packet(object):
         self._size = size
         self.packet_type = packet_type
 
+    def __str__(self):
+        return "%s -> %s" % (self.get_src_id(), self.get_dst_id())
+
     def get_size(self):
         return self._size
 

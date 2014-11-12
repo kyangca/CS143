@@ -80,8 +80,6 @@ class Router(Device):
     # 1) Updates the host's routing table entry with the given cost and link.
     # 2) Sends update BF packets to all adjacent routers except the one which induced this update.
     def bellman_ford_update(self, host_id, cost, mapped_link):
-#        print(host_id, self.get_device_id(), cost, self.get_controller().get_current_time())
-
         self._routing_table[host_id] = mapped_link.get_link_id()
         self._cost_table[host_id] = cost
         for link_id, link in self.get_links().items():

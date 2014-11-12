@@ -53,6 +53,8 @@ class Link:
             [self, packet],
         )
 
+        print (packet, self.get_link_id())
+
     # I assume that routers can know what device is on the other end of the router.
     # TODO: Ask Jianchi to make sure this is correct.
     def opposite_device(self, from_device_id):
@@ -104,12 +106,12 @@ class Link:
         if (rightward_direction):
             # Add an event for when the packet is on the wire.
             self.__next_rightward_start_transmission_time += transmission_time
-            self.__next_leftward_start_transmission_time += self.__next_rightward_start_transmission_time + self.get_link_delay()
+            self.__next_leftward_start_transmission_time = self.__next_rightward_start_transmission_time + self.get_link_delay()
             self.__controller.add_event(self.__next_rightward_start_transmission_time,
                                  self.packet_on_wire_handler, [True])
         else:
             self.__next_leftward_start_transmission_time += transmission_time
-            self.__next_rightward_start_transmission_time += self.__next_leftward_start_transmission_time + self.get_link_delay()
+            self.__next_rightward_start_transmission_time = self.__next_leftward_start_transmission_time + self.get_link_delay()
             self.__controller.add_event(self.__next_leftward_start_transmission_time,
                                  self.packet_on_wire_handler, [False])
 
