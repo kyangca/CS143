@@ -1,4 +1,4 @@
-class Link:
+class Link(object):
     # throughput is in bytes / sec, link_delay in secs,
     # buffer_size is in bytes.
     def __init__(

@@ -24,20 +24,24 @@ class Host(Device):
         # TODO: figure out if we need to include port numbers.
         self._flows = {}
 
+
     def get_link(self):
         return next(iter(self._links.values()))
 
     def add_flow(self, flow_id, flow):
         self._flows[flow_id] = flow
 
-    def send_next_packet(self, flow):
+    def send_next_packet(self, flow):    
+        delta_t = 0.1
+        method = self.send_next_packet
+        args = [flow]
+        if (flow.window_is_full()):
+            # Wait to send the next packet.
+            self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
+            return
         packet = flow.construct_next_packet()
         self.get_link().queue_packet(self.get_device_id(), packet)
         if (flow.is_infinite_flow() or flow.num_remaining_bytes() > 0):
-            #TODO: Use windowing / acknowledgements
-            delta_t = 0.1
-            method = self.send_next_packet
-            args = [flow]
             self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
 
     def receive_packet(self, sending_link, packet):
@@ -52,7 +56,15 @@ class Host(Device):
             # TODO: figure out where to get flow numbers.
             flow = Flow(self._controller, sending_device, self.get_device_id(), flow_id)
             self.add_flow(flow_id, flow)
-        # TODO: add acknowledgements.
+
+
+        if packet.is_TCP_ack():
+            self._flows[flow_id].receive_ack(packet)
+        else:
+            self._flows[flow_id].receive_data(packet)
+            ack_packet_to_send = self._flows[flow_id].get_ack_packet()
+            self.get_link().queue_packet(self.get_device_id(), ack_packet_to_send)
+
         return True
 
 class Router(Device):

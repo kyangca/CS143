@@ -34,6 +34,9 @@ class Packet(object):
     def is_BF_packet(self):
         return (self.packet_type == PacketTypes.BF_DATA)
 
+    def is_TCP_ack(self):
+        return self.packet_type == PacketTypes.TCP_ACK
+
 
 class TCPPacket(Packet):
 
@@ -48,6 +51,7 @@ class TCPPacket(Packet):
 
     def get_sequence_number(self):
         return self._sequence_number
+
 
 class BFPacket(Packet):
     def __init__(self, controller, src_id, dst_id, size, host_id, cost):
