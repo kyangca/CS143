@@ -19,7 +19,7 @@ class Flow(object):
         self.__last_ack_number_received = 0
         self.__num_acks_repeated = 0
         self.__window_size = window_size
-
+        # This denotes the maximum sequence number of any packet which has been received.
         self.__max_contiguous_sequence_number = None
 
     # Returns whether or not the flow should continue ad infinitum.
@@ -49,7 +49,7 @@ class Flow(object):
             self.__last_ack_number_received = sequence_number
             self.__num_acks_repeated = 0
 
-    def recieve_data(self, data_packet):
+    def receive_data(self, data_packet):
         sequence_number = data_packet.get_sequence_number()
         if self.__max_contiguous_sequence_number is None:
             self.__max_contiguous_sequence_number = sequence_number
@@ -58,9 +58,9 @@ class Flow(object):
 
 
     def window_is_full(self):
-        return (self.__last_ack_number_received + self.__window_size > self.__tcp_sequence_number)
+        return (self.__last_ack_number_received + self.__window_size <= self.__tcp_sequence_number)
 
-    def construct_next_packet(self):
+    def construct_next_data_packet(self):
 
         assert (self.is_infinite_flow() or self.num_remaining_bytes() > 0)
 

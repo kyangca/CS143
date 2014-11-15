@@ -126,12 +126,10 @@ class Controller(object):
             self._current_time = event_time
             event_method(*event_args)
 
-a = None
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-f", dest="filename", help="Test json filename (e.g. test0.json)")
     parser.add_option("--debug", action="store_true")
     options, _ = parser.parse_args()
     network_controller = Controller(vars(options))
-    a = network_controller
     network_controller.run(float('inf'))

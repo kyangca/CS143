@@ -53,7 +53,10 @@ class Link(object):
             [self, packet],
         )
 
-        print (packet, self.get_link_id())
+        if (packet.is_TCP_packet()):
+            print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number())
+        else:
+            print ("Running BF", self.get_link_id())
 
     # I assume that routers can know what device is on the other end of the router.
     # TODO: Ask Jianchi to make sure this is correct.
