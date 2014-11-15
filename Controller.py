@@ -11,10 +11,10 @@ class Controller(object):
         filename = options['filename']
         debug = options['debug']
 
-        self.__filename = filename
-        self.__debug = debug
-        self.__current_time = 0.0
-        self.__event_queue = EventQueue()
+        self._filename = filename
+        self._debug = debug
+        self._current_time = 0.0
+        self._event_queue = EventQueue()
 
         self._links = {}
         self._devices = {}
@@ -103,28 +103,35 @@ class Controller(object):
                 num_bytes
                 )
             src_host.add_flow(flow_id, flow)
-            self.__event_queue.add_event(flow_start, src_host.send_next_packet, [flow])
+            self._event_queue.add_event(flow_start, src_host.send_next_packet, [flow])
+            self._flows[flow_id] = True
 
     def add_event(self, *args):
-        self.__event_queue.add_event(*args)
+        self._event_queue.add_event(*args)
 
     def get_current_time(self):
-        return self.__current_time
+        return self._current_time
+
+    def remove_flow(self, flow):
+        self._flows.pop(flow.get_flow_id())
 
     def run(self, num_seconds):
-        while (not self.__event_queue.is_empty() and self.get_current_time() < num_seconds):
-            event = self.__event_queue.pop_event()
-            if (self.__debug):
+        while (not self._event_queue.is_empty() and self.get_current_time() < num_seconds
+               and len(self._flows) > 0):
+            event = self._event_queue.pop_event()
+            if (self._debug):
                 # TODO: add better debugging here.
                 print(event)
             event_time, event_method, event_args = event
-            self.__current_time = event_time
+            self._current_time = event_time
             event_method(*event_args)
 
+a = None
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-f", dest="filename", help="Test json filename (e.g. test0.json)")
     parser.add_option("--debug", action="store_true")
     options, _ = parser.parse_args()
     network_controller = Controller(vars(options))
+    a = network_controller
     network_controller.run(float('inf'))

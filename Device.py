@@ -39,6 +39,8 @@ class Host(Device):
             method = self.send_next_packet
             args = [flow]
             self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
+        else:
+            self.get_controller().remove_flow(flow)
 
     def receive_packet(self, sending_link, packet):
         if (not packet.is_TCP_packet()):
