@@ -43,6 +43,8 @@ class Host(Device):
         self.get_link().queue_packet(self.get_device_id(), packet)
         if (flow.is_infinite_flow() or flow.num_remaining_bytes() > 0):
             self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
+        else:
+            self.get_controller().remove_flow(flow)
 
     def receive_packet(self, sending_link, packet):
         if (not packet.is_TCP_packet()):
