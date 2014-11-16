@@ -32,7 +32,7 @@ class Host(Device):
         self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
-        delta_t = 0.1
+        delta_t = 0.001
         method = self.send_next_packet
         args = [flow]
         if (flow.window_is_full()):
@@ -40,7 +40,9 @@ class Host(Device):
             self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
             return
         packet = flow.construct_next_data_packet()
-        self.get_link().queue_packet(self.get_device_id(), packet)
+        # This operation fails if e.g. we're waiting for the network to clear.
+        if (packet):
+            self.get_link().queue_packet(self.get_device_id(), packet)
         if (flow.is_infinite_flow() or flow.num_remaining_bytes() > 0):
             self._controller.add_event(delta_t + self._controller.get_current_time(), method, args)
         else:
@@ -58,7 +60,6 @@ class Host(Device):
             # TODO: figure out where to get flow numbers.
             flow = Flow(self._controller, sending_device, self.get_device_id(), flow_id)
             self.add_flow(flow_id, flow)
-
 
         if packet.is_TCP_ack():
             # Update the flow state with the received ack packet.
