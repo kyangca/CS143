@@ -54,7 +54,8 @@ class Link(object):
         )
 
         if (packet.is_TCP_packet()):
-            print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number())
+            print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number(),
+                   "ack # = ", packet.get_ack_number())
         else:
             print ("Running BF", self.get_link_id())
 

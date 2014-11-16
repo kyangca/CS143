@@ -40,10 +40,12 @@ class Packet(object):
 
 class TCPPacket(Packet):
 
-    def __init__(self, controller, src_id, dst_id, size, packet_type, sequence_number, flow_id):
+    def __init__(self, controller, src_id, dst_id, size, packet_type,
+                 sequence_number, ack_number, flow_id):
         super().__init__(controller, src_id, dst_id, size, packet_type)
         assert (self.is_TCP_packet())
         self._sequence_number = sequence_number
+        self._ack_number = ack_number
         self._flow_id = flow_id
 
     def get_flow_id(self):
@@ -51,6 +53,9 @@ class TCPPacket(Packet):
 
     def get_sequence_number(self):
         return self._sequence_number
+
+    def get_ack_number(self):
+        return self._ack_number
 
 
 class BFPacket(Packet):

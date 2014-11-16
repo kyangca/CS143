@@ -32,7 +32,7 @@ class Host(Device):
         self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
-        delta_t = 0.01
+        delta_t = 0.1
         method = self.send_next_packet
         args = [flow]
         if (flow.window_is_full()):
