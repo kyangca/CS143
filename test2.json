@@ -1,0 +1,207 @@
+{
+  "routers": [
+    {
+      "id": "R1",
+      "links": [
+        "L1",
+        "L4",
+        "L5"
+      ],
+      "routing_table": {
+        "S1": "L5",
+        "S2": "L4",
+        "S3": "L1",
+        "T1": "L1",
+        "T2": "L1",
+        "T3": "L1" 
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R2",
+      "links": [
+        "L1",
+        "L2",
+        "L6"
+      ],
+      "routing_table": {
+        "S1": "L1",
+        "S2": "L1",
+        "S3": "L2",
+        "T1": "L2",
+        "T2": "T6",
+        "T3": "L2"
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R3",
+      "links": [
+        "L2",
+        "L3",
+        "L7"
+      ],
+      "routing_table": {
+        "S1": "L2",
+        "S2": "L2",
+        "S3": "L7",
+        "T1": "L3",
+        "T2": "L2",
+        "T3": "L3"
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R4",
+      "links": [
+        "L3",
+        "L8",
+        "L9"
+      ],
+      "routing_table": {
+        "S1": "L3",
+        "S2": "L3",
+        "S3": "L3",
+        "T1": "L8",
+        "T2": "L3",
+        "T3": "L9"
+      },
+      "BFfreq": 1
+    }
+  ],
+  "hosts": [
+    {
+      "id": "S1",
+      "links": [
+        "L5"
+      ]
+    },
+    {
+      "id": "S2",
+      "links": [
+        "L4"
+      ]
+    },
+    {
+      "id": "S3",
+      "links": [
+        "L7"
+      ]
+    },
+    {
+      "id": "T1",
+      "links": [
+        "L8"
+      ]
+    },
+    {
+      "id": "T2",
+      "links": [
+        "L6"
+      ]
+    },
+    {
+      "id": "T3",
+      "links": [
+        "L9"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "id": "L1",
+      "left_device_id": "R1",
+      "right_device_id": "R2",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L2",
+      "left_device_id": "R2",
+      "right_device_id": "R3",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L3",
+      "left_device_id": "R3",
+      "right_device_id": "R4",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L4",
+      "left_device_id": "S2",
+      "right_device_id": "R1",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L5",
+      "left_device_id": "R1",
+      "right_device_id": "S1",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L6",
+      "left_device_id": "T2",
+      "right_device_id": "R2",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L7",
+      "left_device_id": "S3",
+      "right_device_id": "R3",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L8",
+      "left_device_id": "T1",
+      "right_device_id": "R4",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    },
+    {
+      "id": "L9",
+      "left_device_id": "R4",
+      "right_device_id": "T3",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 128000
+    }
+  ],
+  "flows": [
+    {
+      "id": "F1",
+      "src_id": "S1",
+      "dst_id": "T1",
+      "num_bytes": 35000000,
+      "start_time": 0.5
+    },
+    {
+      "id": "F2",
+      "src_id": "S2",
+      "dst_id": "T2",
+      "num_bytes": 15000000,
+      "start_time": 10
+    },
+    {
+      "id": "F3",
+      "src_id": "S3",
+      "dst_id": "T3",
+      "num_bytes": 30000000,
+      "start_time": 20
+    }
+  ]
+}
