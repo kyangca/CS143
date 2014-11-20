@@ -113,6 +113,7 @@ class Flow(object):
         self.__last_ack_number_received = ack_number
 
     def receive_data(self, data_packet):
+        self.__controller.log(self.__flow_id)
         sequence_number = data_packet.get_sequence_number()
         self.__uncounted_sequence_numbers[sequence_number] = True
         while (self.__max_contiguous_sequence_number + 1 in self.__uncounted_sequence_numbers):

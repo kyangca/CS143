@@ -4,6 +4,8 @@ from Device import Host, Router
 from Flow import Flow
 from EventQueue import EventQueue
 from optparse import OptionParser
+from collections import defaultdict
+from matplotlib import pyplot
 
 class Controller(object):
 
@@ -19,6 +21,8 @@ class Controller(object):
         self._links = {}
         self._devices = {}
         self._flows = {}
+
+        self._logs = defaultdict(list)
 
         with open(filename) as f:
             json_network = json.loads(f.read())
@@ -115,6 +119,9 @@ class Controller(object):
     def remove_flow(self, flow):
         self._flows.pop(flow.get_flow_id())
 
+    def log(self, event):
+        self._logs[event].append(self._current_time)
+
     def run(self, num_seconds):
         while (not self._event_queue.is_empty() and self.get_current_time() < num_seconds
                and len(self._flows) > 0):
@@ -133,3 +140,8 @@ if __name__ == '__main__':
     options, _ = parser.parse_args()
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
+
+    for key in network_controller._logs:
+        pyplot.hist(network_controller._logs[key], bins=250, histtype='step')
+        pyplot.show()
+        break
