@@ -109,6 +109,7 @@ class Controller(object):
             src_host.add_flow(flow_id, flow)
             self._event_queue.add_event(flow_start, src_host.send_next_packet, [flow])
             self._flows[flow_id] = True
+        self.devices = self._devices
 
     def add_event(self, *args):
         self._event_queue.add_event(*args)
@@ -141,7 +142,23 @@ if __name__ == '__main__':
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
 
+    X = []
+    Y = []
     for key in network_controller._logs:
-        pyplot.hist(network_controller._logs[key], bins=250, histtype='step')
+        times = network_controller._logs[key]
+        for idx, t in enumerate(times):
+            low_idx = idx
+            while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
+                low_idx -= 1
+            print("t", times[idx] - times[low_idx])
+            if (times[idx] == times[low_idx]):
+                continue
+            y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
+            X.append(t)
+            Y.append(y_val)
+
+#            Y.append(len(list(filter(lambda x : x <= t and x >= t - 0.3, times))))
+#        pyplot.hist(network_controller._logs[key], bins=50, histtype='step')
+        pyplot.plot(X, Y)
         pyplot.show()
-        break
+        

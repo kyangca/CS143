@@ -61,6 +61,9 @@ class Flow(object):
         print("Transitioned to reno state 2")
         self.__state = FlowStates.RenoSlowStartPart2
         print (self.__tcp_sequence_number)
+        print (self.__src_id)
+        src = self.__controller.devices[self.__src_id]
+        src.send_next_packet(self)
 
     def receive_ack(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
@@ -79,6 +82,7 @@ class Flow(object):
                 self.__controller.add_event(transition_time, self.transition_to_slow_start_part_2, [])
             else:
                 self.__window_size += 1
+                print (self.__window_size)
                 self.__last_ack_number_received = ack_number
             return
 
@@ -104,10 +108,13 @@ class Flow(object):
             elif (self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1):
                 self.__window_size += 1
             return
+        elif (ack_number > self.__tcp_sequence_number):
+            self.__tcp_sequence_number = ack_number
 
         if (self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1):
             self.__window_size = self.__old_window_size / 2
         else:
+            print (self.__window_size)
             self.__window_size += 1.0 / self.__window_size
         self.__num_acks_repeated = 0
         self.__last_ack_number_received = ack_number
