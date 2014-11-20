@@ -22,7 +22,7 @@ class Controller(object):
         self._devices = {}
         self._flows = {}
 
-        self._logs = defaultdict(list)
+        self._logs = {}
 
         with open(filename) as f:
             json_network = json.loads(f.read())
@@ -120,8 +120,11 @@ class Controller(object):
     def remove_flow(self, flow):
         self._flows.pop(flow.get_flow_id())
 
-    def log(self, event):
-        self._logs[event].append(self._current_time)
+    def log(self, device_type, device_name):
+        if device_type not in self._logs:
+            self._logs[device_type] = defaultdict(list)
+
+        self._logs[device_type][device_name].append(self._current_time)
 
     def run(self, num_seconds):
         while (not self._event_queue.is_empty() and self.get_current_time() < num_seconds
@@ -142,23 +145,23 @@ if __name__ == '__main__':
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
 
-    X = []
-    Y = []
-    for key in network_controller._logs:
-        times = network_controller._logs[key]
-        for idx, t in enumerate(times):
-            low_idx = idx
-            while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
-                low_idx -= 1
-            print("t", times[idx] - times[low_idx])
-            if (times[idx] == times[low_idx]):
-                continue
-            y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
-            X.append(t)
-            Y.append(y_val)
-
-#            Y.append(len(list(filter(lambda x : x <= t and x >= t - 0.3, times))))
-#        pyplot.hist(network_controller._logs[key], bins=50, histtype='step')
-        pyplot.plot(X, Y)
-        pyplot.show()
-        
+    figure = 1
+    for device_type in network_controller._logs:
+        pyplot.figure(figure)
+        pyplot.title(device_type)
+        for device_name in network_controller._logs[device_type]:
+            X = []
+            Y = []
+            times = network_controller._logs[device_type][device_name]
+            for idx, t in enumerate(times):
+                low_idx = idx
+                while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
+                    low_idx -= 1
+                if (times[idx] == times[low_idx]):
+                    continue
+                y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
+                X.append(t)
+                Y.append(y_val)
+            pyplot.plot(X, Y)
+        figure += 1
+    pyplot.show()
