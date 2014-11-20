@@ -53,14 +53,15 @@ class Link(object):
             [self, packet],
         )
 
-        if (packet.is_TCP_packet()):
-            print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number(),
-                   "ack # = ", packet.get_ack_number(), "t =",
-                   self.get_controller().get_current_time())
-        else:
-            print ("Running BF", self.get_link_id())
+        # if (packet.is_TCP_packet()):
+        #     print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number(),
+        #            "ack # = ", packet.get_ack_number(), "t =",
+        #            self.get_controller().get_current_time())
+        # else:
+        #     print ("Running BF", self.get_link_id())
 
-    # I assume that routers can know what device is on the other end of the router.
+    # I assume that routers can know what device is on the other end of the
+    # router.
     # TODO: Ask Jianchi to make sure this is correct.
     def opposite_device(self, from_device_id):
         if (from_device_id == self.__left_device.get_device_id()):
@@ -70,8 +71,8 @@ class Link(object):
         else:
             raise Exception("Unknown device id.")
 
-    # Returns the estimated amount of time that will be required to send a packet from the
-    # given attached device across this link.
+    # Returns the estimated amount of time that will be required to send a
+    # packet from the given attached device across this link.
     def estimate_cost(self, from_device_id):
         # TODO: Ask Jianchi how to do correct calculations.
         if (from_device_id == self.__left_device.get_device_id()):
@@ -79,7 +80,7 @@ class Link(object):
                        self.get_controller().get_current_time())
         elif (from_device_id == self.__right_device.get_device_id()):
             return max(0, self.__next_leftward_start_transmission_time -
-                       self.get_controller().get_current_time())            
+                       self.get_controller().get_current_time())
         else:
             raise Exception("Invalid device id.")
 

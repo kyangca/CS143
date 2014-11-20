@@ -1,20 +1,21 @@
-import json
-from Link import Link
-from Device import Host, Router
-from Flow import Flow
-from EventQueue import EventQueue
-from optparse import OptionParser
+#!/usr/bin/python
+
 from collections import defaultdict
+from Device import Host, Router
+from EventQueue import EventQueue
+from Flow import Flow
+from Link import Link
 from matplotlib import pyplot
+from optparse import OptionParser
+import json
 
 class Controller(object):
+    """The main controller class.
+    """
 
     def __init__(self, options):
-        filename = options['filename']
-        debug = options['debug']
-
-        self._filename = filename
-        self._debug = debug
+        self._filename = options['filename']
+        self._debug = options['debug']
         self._current_time = 0.0
         self._event_queue = EventQueue()
 
@@ -24,7 +25,7 @@ class Controller(object):
 
         self._logs = {}
 
-        with open(filename) as f:
+        with open(self._filename) as f:
             json_network = json.loads(f.read())
 
         json_hosts = json_network['hosts']
@@ -37,49 +38,40 @@ class Controller(object):
 
         for json_link in json_links:
             link_id = json_link['id']
-            link_throughput = json_link['throughput']
-            link_buffer_size = json_link['buffer_size']
-            link_delay = json_link['link_delay']
-
             self._links[link_id] = Link(
-                self,
-                None,
-                None,
-                link_throughput,
-                link_delay,
-                link_buffer_size,
-                link_id,
+                controller=self,
+                left_device=None,
+                right_device=None,
+                throughput=json_link['throughput'],
+                link_delay=json_link['link_delay'],
+                buffer_size=json_link['buffer_size'],
+                link_id=link_id,
                 )
 
         for json_host in json_hosts:
             host_id = json_host['id']
-            host_link_ids = json_host['links']
-            host_links = {x: self._links[x] for x in host_link_ids}
             self._devices[host_id] = Host(
-                self,
-                host_links,
-                host_id,
+                controller=self,
+                links={x: self._links[x] for x in json_host['links']},
+                device_id=host_id,
                 )
 
         for json_router in json_routers:
             router_id = json_router['id']
-            router_link_ids = json_router['links']
-            router_links = {x: self._links[x] for x in router_link_ids}
-            bf_freq = json_router['BFfreq']
             # Get the statically generated routing table.
             if ("routing_table" in json_router):
                 routing_table = json_router["routing_table"]
             else:
                 routing_table = {}
             self._devices[router_id] = Router(
-                self,
-                router_links,
-                router_id,
-                bf_freq,
-                routing_table,
+                controller=self,
+                links={x: self._links[x] for x in json_router['links']},
+                device_id=router_id,
+                bf_freq=json_router['BFfreq'],
+                routing_table=routing_table
                 )
 
-        # Now add the references to the devices onto the links
+        # Now add the references to the devices onto the links.
         for json_link in json_links:
             link_id = json_link['id']
             link_left_device_id = json_link['left_device_id']
@@ -92,7 +84,8 @@ class Controller(object):
             self._links[link_id].set_right_device(right_device)
 
         for json_flow in json_flows:
-            # Instantiate the flow in the source host and the event in EventQueue
+            # Instantiate the flow in the source host and the event in
+            # EventQueue.
             src_id = json_flow['src_id']
             dst_id = json_flow['dst_id']
             num_bytes = json_flow['num_bytes']
@@ -107,7 +100,8 @@ class Controller(object):
                 num_bytes
                 )
             src_host.add_flow(flow_id, flow)
-            self._event_queue.add_event(flow_start, src_host.send_next_packet, [flow])
+            self._event_queue.add_event(flow_start, src_host.send_next_packet,
+                [flow])
             self._flows[flow_id] = True
         self.devices = self._devices
 
@@ -127,8 +121,13 @@ class Controller(object):
         self._logs[device_type][device_name].append(self._current_time)
 
     def run(self, num_seconds):
-        while (not self._event_queue.is_empty() and self.get_current_time() < num_seconds
-               and len(self._flows) > 0):
+        """Runs the simulation.
+
+        Args:
+            num_seconds: The number of seconds to run the simulation.
+        """
+        while (not self._event_queue.is_empty() and self.get_current_time() <
+                num_seconds and len(self._flows) > 0):
             event = self._event_queue.pop_event()
             if (self._debug):
                 # TODO: add better debugging here.
@@ -137,31 +136,37 @@ class Controller(object):
             self._current_time = event_time
             event_method(*event_args)
 
+    def plot(self):
+        figure = 1
+        for device_type in network_controller._logs:
+            pyplot.figure(figure)
+            pyplot.title(device_type)
+            for device_name in network_controller._logs[device_type]:
+                X = []
+                Y = []
+                times = network_controller._logs[device_type][device_name]
+                for idx, t in enumerate(times):
+                    low_idx = idx
+                    while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
+                        low_idx -= 1
+                    if (times[idx] == times[low_idx]):
+                        continue
+                    y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
+                    X.append(t)
+                    Y.append(y_val)
+                pyplot.plot(X, Y)
+            figure += 1
+        pyplot.show()
+
 if __name__ == '__main__':
     parser = OptionParser()
-    parser.add_option("-f", dest="filename", help="Test json filename (e.g. test0.json)")
+    parser.add_option("-f", "--file", dest="filename",
+        help="Test json filename (e.g. test0.json)")
+    parser.add_option("-q", "--quiet", action="store_false", dest="verbose",
+        default=True, help="don't print status messages to stdout")
     parser.add_option("--debug", action="store_true")
     options, _ = parser.parse_args()
+
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
-
-    figure = 1
-    for device_type in network_controller._logs:
-        pyplot.figure(figure)
-        pyplot.title(device_type)
-        for device_name in network_controller._logs[device_type]:
-            X = []
-            Y = []
-            times = network_controller._logs[device_type][device_name]
-            for idx, t in enumerate(times):
-                low_idx = idx
-                while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
-                    low_idx -= 1
-                if (times[idx] == times[low_idx]):
-                    continue
-                y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
-                X.append(t)
-                Y.append(y_val)
-            pyplot.plot(X, Y)
-        figure += 1
-    pyplot.show()
+    network_controller.plot()

@@ -127,7 +127,7 @@ class Router(Device):
             cost = link.estimate_cost(self.get_device_id())
             # Update all the other links the cost of the attached host.
             self.bellman_ford_update(host_id, cost, link)
-        
+
 
     # sending_link is the link which is putting the packet into the router.
     def receive_packet(self, sending_link, packet):
