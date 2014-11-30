@@ -98,8 +98,8 @@ class Controller(object):
                 src_id,
                 dst_id,
                 flow_id,
-                num_bytes,
-                tcp
+                tcp,
+                num_bytes
                 )
             src_host.add_flow(flow_id, flow)
             self._event_queue.add_event(flow_start, src_host.send_next_packet,
