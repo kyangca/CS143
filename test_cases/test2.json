@@ -187,21 +187,24 @@
       "src_id": "S1",
       "dst_id": "T1",
       "num_bytes": 35000000,
-      "start_time": 0.5
+      "start_time": 0.5,
+      "tcp": "reno"
     },
     {
       "id": "F2",
       "src_id": "S2",
       "dst_id": "T2",
       "num_bytes": 15000000,
-      "start_time": 10
+      "start_time": 10,
+      "tcp": "reno"
     },
     {
       "id": "F3",
       "src_id": "S3",
       "dst_id": "T3",
       "num_bytes": 30000000,
-      "start_time": 20
+      "start_time": 20,
+      "tcp": "reno"
     }
   ]
 }

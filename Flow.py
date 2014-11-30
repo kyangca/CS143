@@ -17,7 +17,7 @@ class Flow(object):
     RENO_SLOW_START_TIMEOUT = 2.0
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
-    def __init__(self, controller, src_id, dst_id, flow_id, num_bytes = 0):
+    def __init__(self, controller, src_id, dst_id, flow_id, num_bytes = 0, tcp):
         self.__controller = controller
         self.__src_id = src_id
         self.__dst_id = dst_id
@@ -28,6 +28,7 @@ class Flow(object):
         self.__last_ack_number_received = 0
         self.__num_acks_repeated = 0
         self.__window_size = 1.0
+        self.__tcp = tcp
 
         self.__SSthreshold = float('inf')
         self.__state = FlowStates.RenoSlowStartPart1
@@ -56,6 +57,9 @@ class Flow(object):
 
     def get_dst_id(self):
         return self.__dst_id
+
+	def get_tcp_algorithm(self):
+		return self.__tcp
 
     def transition_to_slow_start_part_2(self):
         print("Transitioned to reno state 2")

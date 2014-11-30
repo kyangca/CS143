@@ -91,13 +91,15 @@ class Controller(object):
             num_bytes = json_flow['num_bytes']
             flow_start = json_flow['start_time']
             flow_id = json_flow['id']
+            tcp = json_flow['tcp']
             src_host = self._devices[src_id]
             flow = Flow(
                 self,
                 src_id,
                 dst_id,
                 flow_id,
-                num_bytes
+                num_bytes,
+                tcp
                 )
             src_host.add_flow(flow_id, flow)
             self._event_queue.add_event(flow_start, src_host.send_next_packet,
