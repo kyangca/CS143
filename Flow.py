@@ -70,6 +70,13 @@ class Flow(object):
         src.send_next_packet(self)
 
     def receive_ack(self, ack_packet):
+        if (self.__tcp == "reno"):
+            receive_ack_reno(self, ack_packet)
+        else:
+            #TODO: Decide on alternate
+            print("TODO")
+
+    def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
         if (self.__state == FlowStates.RenoSlowStartPart1):
             if (self.__last_ack_number_received == ack_number):
@@ -135,6 +142,12 @@ class Flow(object):
         return (self.__last_ack_number_received + self.__window_size <= self.__tcp_sequence_number)
 
     def construct_next_data_packet(self):
+        if(self.__tcp == "reno"):
+            construct_next_data_packet_reno(self)
+        else:
+            print("TODO")
+
+    def construct_next_data_packet_reno(self):
 
         assert (self.is_infinite_flow() or self.num_remaining_bytes() > 0)
         if (self.__state == FlowStates.RenoSlowStartTransition):
