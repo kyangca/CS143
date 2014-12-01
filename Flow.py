@@ -7,6 +7,10 @@ class FlowStates(object):
     RenoSlowStartTransition = 2
     # TODO: Generalize Flow so it uses state transitions more effectively.
     RenoTransmit = 3
+    FastSlowStart = 4
+    FastRetransmit = 5
+    FastCA = 6
+    FastFrFr = 7
 
 # A flow represents the transfer of data from one host to another.
 class Flow(object):
@@ -15,6 +19,8 @@ class Flow(object):
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 2.0
+    FAST_ALPHA = 1.0 #TODO: Adopt .75(B/N) estimate Professor Low suggested
+    FAST_BASE_RTT = 1000000000000000 #Start off with a high base RTT
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
     def __init__(self, controller, src_id, dst_id, flow_id, tcp, num_bytes = 0):
@@ -31,7 +37,12 @@ class Flow(object):
         self.__tcp = tcp
 
         self.__SSthreshold = float('inf')
-        self.__state = FlowStates.RenoSlowStartPart1
+        if(tcp == "reno"):
+            self.__state = FlowStates.RenoSlowStartPart1
+        elif(tcp == "fast"):
+            self.__state = FlowStates.FastSlowStart
+        else:
+            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
 
         # Denotes a sequence number to retransmit.
         self.__fast_recovery_sequence_number = None
@@ -72,9 +83,24 @@ class Flow(object):
     def receive_ack(self, ack_packet):
         if (self.__tcp == "reno"):
             receive_ack_reno(self, ack_packet)
+        elif (self.__tcp == "fast"):
+            receive_ack_fast(self, ack_packet)
         else:
-            #TODO: Decide on alternate
+            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
+
+    def receive_ack_fast(self, ack_packet):
+        ack_number = ack_packet.get_ack_number()
+        if(self.__state == FlowStates.FastSlowStart):
             print("TODO")
+        elif(self.__state == FlowStates.FastRetransmit):
+            print("TODO")
+        elif(self.__state == FlowStates.FastCA):
+            rtt = -1
+            self.__window_size = (FAST_BASE_RTT/rtt)*self.__window_size + FAST_ALPHA
+        elif(self.__state == FlowStates.FastFrFr):
+            print("TODO")
+        else:
+            raise RuntimeError("Invalid state reached in FAST-TCP")
 
     def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
@@ -144,8 +170,13 @@ class Flow(object):
     def construct_next_data_packet(self):
         if(self.__tcp == "reno"):
             construct_next_data_packet_reno(self)
+        elif(self.__tcp == "fast"):
+            construct_next_data_packet_fast(self)
         else:
-            print("TODO")
+            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
+
+    def construct_next_data_packet_fast(self):
+        print("TODO")
 
     def construct_next_data_packet_reno(self):
 
