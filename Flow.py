@@ -90,6 +90,13 @@ class Flow(object):
         else:
             raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
 
+        self.__controller.log(
+            "window-size",
+            self.__flow_id,
+            self.__window_size,
+            ylabel="window size (pkts)",
+        )
+
     def receive_ack_fast(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
         if(self.__state == FlowStates.FastSlowStart):
@@ -158,8 +165,19 @@ class Flow(object):
         self.__num_acks_repeated = 0
         self.__last_ack_number_received = ack_number
 
+    @staticmethod
+    def flow_rate_aggregator(values, interval_length):
+        return sum(values) / float(interval_length) * 8.0 / 1000000.0
+
     def receive_data(self, data_packet):
-        self.__controller.log("flow", self.__flow_id)
+        self.__controller.log(
+            "flow-rate",
+            self.__flow_id,
+            data_packet.get_size(),
+            values_aggregator=self.flow_rate_aggregator,
+            ylabel="flow rate (Mbps)",
+        )
+
         sequence_number = data_packet.get_sequence_number()
         self.__uncounted_sequence_numbers[sequence_number] = True
         while (self.__max_contiguous_sequence_number + 1 in self.__uncounted_sequence_numbers):

@@ -132,7 +132,6 @@ class Router(Device):
     # sending_link is the link which is putting the packet into the router.
     def receive_packet(self, sending_link, packet):
         if packet.is_TCP_packet():
-            self._controller.log("router", self.get_device_id())
             # Route the packet.
             dst_id = packet.get_dst_id()
             if (not dst_id in self._routing_table):

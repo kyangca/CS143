@@ -17,6 +17,8 @@ class Controller(object):
         self._filename = options['filename']
         self._debug = options['debug']
         self._current_time = 0.0
+        self._log_interval_start = 0.0
+        self._log_interval_length = 0.1
         self._event_queue = EventQueue()
 
         self._links = {}
@@ -24,6 +26,7 @@ class Controller(object):
         self._flows = {}
 
         self._logs = {}
+        self._show_on_plot = set()
 
         with open(self._filename) as f:
             json_network = json.loads(f.read())
@@ -47,6 +50,8 @@ class Controller(object):
                 buffer_size=json_link['buffer_size'],
                 link_id=link_id,
                 )
+            if 'show_on_plot' in json_link and json_link['show_on_plot']:
+                self._show_on_plot.add(link_id)
 
         for json_host in json_hosts:
             host_id = json_host['id']
@@ -105,6 +110,8 @@ class Controller(object):
             self._event_queue.add_event(flow_start, src_host.send_next_packet,
                 [flow])
             self._flows[flow_id] = True
+            if 'show_on_plot' in json_flow and json_flow['show_on_plot']:
+                self._show_on_plot.add(flow_id)
         self.devices = self._devices
 
     def add_event(self, *args):
@@ -116,11 +123,54 @@ class Controller(object):
     def remove_flow(self, flow):
         self._flows.pop(flow.get_flow_id())
 
-    def log(self, log_type, device_name):
-        if log_type not in self._logs:
-            self._logs[log_type] = defaultdict(list)
+    def _process_temp_interval_values(self):
+        '''Move data point into X, Y lists and reset all temp intervals'''
 
-        self._logs[log_type][device_name].append(self._current_time)
+        interval_length = min(self._log_interval_length, self._current_time - self._log_interval_start)
+
+        for log_type in self._logs:
+            for device_name in self._logs[log_type]['devices']:
+                temp_values = self._logs[log_type]['devices'][device_name]['temp_interval_values']
+                if temp_values:
+                    time = self._log_interval_start + interval_length / 2.0
+                    aggregated_value = self._logs[log_type]['values_aggregator'](temp_values, interval_length)
+
+                    self._logs[log_type]['devices'][device_name]['X'].append(time)
+                    self._logs[log_type]['devices'][device_name]['Y'].append(aggregated_value)
+
+                    self._logs[log_type]['devices'][device_name]['temp_interval_values'] = []
+
+        self._log_interval_start = int(self._current_time / self._log_interval_length) * self._log_interval_length
+
+    def log(
+        self,
+        log_type,
+        device_name,
+        value,
+        values_aggregator=lambda values, interval_length:sum(values) / float(len(values)),
+        ylabel=None,
+    ):
+        if ylabel is None:
+            ylabel = log_type
+
+        if log_type not in self._logs:
+            self._logs[log_type] = {
+                'devices': {},
+                'ylabel': ylabel,
+                'values_aggregator': values_aggregator,
+            }
+
+        if device_name not in self._logs[log_type]['devices']:
+            self._logs[log_type]['devices'][device_name] = {
+                'temp_interval_values': [],
+                'X': [],
+                'Y': [],
+            }
+
+        if self._current_time - self._log_interval_length >= self._log_interval_start:
+            self._process_temp_interval_values()
+
+        self._logs[log_type]['devices'][device_name]['temp_interval_values'].append(value)
 
     def run(self, num_seconds):
         """Runs the simulation.
@@ -128,8 +178,11 @@ class Controller(object):
         Args:
             num_seconds: The number of seconds to run the simulation.
         """
-        while (not self._event_queue.is_empty() and self.get_current_time() <
-                num_seconds and len(self._flows) > 0):
+        while (
+            not self._event_queue.is_empty()
+            and self.get_current_time() < num_seconds
+            and len(self._flows) > 0
+        ):
             event = self._event_queue.pop_event()
             if (self._debug):
                 # TODO: add better debugging here.
@@ -139,33 +192,29 @@ class Controller(object):
             event_method(*event_args)
 
     def plot(self):
-        figure = 1
+        self._process_temp_interval_values()
 
-        PLOT_TITLES = {
+        num_subplots = len(self._logs)
 
-        }
+        if num_subplots == 1:
+            f, ax = pyplot.subplots(num_subplots, sharex=True)
+            axarr = [ax]
+        elif num_subplots > 1:
+            f, axarr = pyplot.subplots(num_subplots, sharex=True)
 
-        for log_type in network_controller._logs:
-            print("has log type")
-            pyplot.figure(figure)
-            pyplot.title(PLOT_TITLES[log_type] if log_type in PLOT_TITLES else log_type)
+        current_subplot = 0
 
-            for device_name in network_controller._logs[log_type]:
-                X = []
-                Y = []
-                times = network_controller._logs[log_type][device_name]
-                for idx, t in enumerate(times):
-                    low_idx = idx
-                    while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
-                        low_idx -= 1
-                    if (times[idx] == times[low_idx]):
-                        continue
-                    y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
-                    X.append(t)
-                    Y.append(y_val)
-                pyplot.plot(X, Y)
+        for log_type in self._logs:
+            for device_name in network_controller._logs[log_type]['devices']:
+                if device_name in self._show_on_plot:
+                    X = network_controller._logs[log_type]['devices'][device_name]['X']
+                    Y = network_controller._logs[log_type]['devices'][device_name]['Y']
+                    axarr[current_subplot].plot(X, Y, label=device_name)
+                    axarr[current_subplot].set_ylabel(network_controller._logs[log_type]['ylabel'])
+            axarr[current_subplot].legend()
+            current_subplot += 1
 
-            figure += 1
+        axarr[-1].set_xlabel('time (s)')
         pyplot.show()
 
 if __name__ == '__main__':
@@ -179,5 +228,5 @@ if __name__ == '__main__':
 
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
-    print("plotting")
+
     network_controller.plot()

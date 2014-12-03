@@ -20,7 +20,8 @@
       "right_device_id": "H2",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 64000
+      "buffer_size": 64000,
+      "show_on_plot": true
     }
   ],
   "flows": [
@@ -30,7 +31,8 @@
       "dst_id": "H2",
       "num_bytes": 20000000,
       "start_time": 1,
-      "tcp": "reno"
+      "tcp": "reno",
+      "show_on_plot": true
     }
   ],
   "routers": [

@@ -27,6 +27,9 @@ class Link(object):
     def bytes_in_buffer(buf):
         return sum([x.get_size() for x in buf])
 
+    def num_packets_in_buffers(self):
+        return len(self.__rightward_buffer) + len(self.__leftward_buffer)
+
     def get_link_id(self):
         return self.__link_id
 
@@ -35,6 +38,10 @@ class Link(object):
 
     def get_controller(self):
         return self.__controller
+
+    @staticmethod
+    def link_rate_aggregator(values, interval_length):
+        return sum(values) / float(interval_length) * 8.0 / 1000000.0
 
     # Called after the packet is put on the wire (e.g. after 1024 / throughput seconds.
     def packet_on_wire_handler(self, rightward_direction):
@@ -46,6 +53,14 @@ class Link(object):
         else:
             packet = self.__leftward_buffer.pop(0)
             device = self.__left_device
+
+        self.__controller.log(
+            "link-rate",
+            self.__link_id,
+            packet.get_size(),
+            values_aggregator=self.link_rate_aggregator,
+            ylabel="link rate (Mbps)",
+        )
 
         self.__controller.add_event(
             receive_time,
@@ -91,6 +106,13 @@ class Link(object):
             max(self.__next_rightward_start_transmission_time, self.__controller.get_current_time())
         self.__next_leftward_start_transmission_time = \
             max(self.__next_leftward_start_transmission_time, self.__controller.get_current_time())
+
+        self.__controller.log(
+            "buffer-occupancy",
+            self.__link_id,
+            self.num_packets_in_buffers(),
+            ylabel="buffer occupancy (pkts)",
+        )
 
         # figure out direction and buffer
         if (from_device_id == self.__left_device.get_device_id()):
