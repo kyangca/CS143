@@ -116,11 +116,11 @@ class Controller(object):
     def remove_flow(self, flow):
         self._flows.pop(flow.get_flow_id())
 
-    def log(self, device_type, device_name):
-        if device_type not in self._logs:
-            self._logs[device_type] = defaultdict(list)
+    def log(self, log_type, device_name):
+        if log_type not in self._logs:
+            self._logs[log_type] = defaultdict(list)
 
-        self._logs[device_type][device_name].append(self._current_time)
+        self._logs[log_type][device_name].append(self._current_time)
 
     def run(self, num_seconds):
         """Runs the simulation.
@@ -140,13 +140,20 @@ class Controller(object):
 
     def plot(self):
         figure = 1
-        for device_type in network_controller._logs:
+
+        PLOT_TITLES = {
+
+        }
+
+        for log_type in network_controller._logs:
+            print("has log type")
             pyplot.figure(figure)
-            pyplot.title(device_type)
-            for device_name in network_controller._logs[device_type]:
+            pyplot.title(PLOT_TITLES[log_type] if log_type in PLOT_TITLES else log_type)
+
+            for device_name in network_controller._logs[log_type]:
                 X = []
                 Y = []
-                times = network_controller._logs[device_type][device_name]
+                times = network_controller._logs[log_type][device_name]
                 for idx, t in enumerate(times):
                     low_idx = idx
                     while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
@@ -157,6 +164,7 @@ class Controller(object):
                     X.append(t)
                     Y.append(y_val)
                 pyplot.plot(X, Y)
+
             figure += 1
         pyplot.show()
 
@@ -171,4 +179,5 @@ if __name__ == '__main__':
 
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
+    print("plotting")
     network_controller.plot()

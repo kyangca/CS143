@@ -23,7 +23,7 @@ class Flow(object):
     FAST_BASE_RTT = 1000000000000000 #Start off with a high base RTT
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
-    def __init__(self, controller, src_id, dst_id, flow_id, tcp, num_bytes = 0):
+    def __init__(self, controller, src_id, dst_id, flow_id, tcp="reno", num_bytes = 0):
         self.__controller = controller
         self.__src_id = src_id
         self.__dst_id = dst_id
@@ -34,11 +34,13 @@ class Flow(object):
         self.__last_ack_number_received = 0
         self.__num_acks_repeated = 0
         self.__window_size = 1.0
-        self.__tcp = tcp
+        self.__tcp = tcp  # TCP algorithm
+        print(tcp)
 
         self.__SSthreshold = float('inf')
         if(tcp == "reno"):
             self.__state = FlowStates.RenoSlowStartPart1
+            print("in reno")
         elif(tcp == "fast"):
             self.__state = FlowStates.FastSlowStart
         else:
@@ -82,9 +84,9 @@ class Flow(object):
 
     def receive_ack(self, ack_packet):
         if (self.__tcp == "reno"):
-            receive_ack_reno(self, ack_packet)
+            self.receive_ack_reno(ack_packet)
         elif (self.__tcp == "fast"):
-            receive_ack_fast(self, ack_packet)
+            self.receive_ack_fast(ack_packet)
         else:
             raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
 
@@ -169,9 +171,9 @@ class Flow(object):
 
     def construct_next_data_packet(self):
         if(self.__tcp == "reno"):
-            construct_next_data_packet_reno(self)
+            return self.construct_next_data_packet_reno()
         elif(self.__tcp == "fast"):
-            construct_next_data_packet_fast(self)
+            return self.construct_next_data_packet_fast()
         else:
             raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
 
