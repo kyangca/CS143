@@ -67,7 +67,7 @@ class Host(Device):
             # Update the flow state with the received data packet.
             self._flows[flow_id].receive_data(packet)
             # Construct and send an acknowledgement packet.
-            ack_packet_to_send = self._flows[flow_id].construct_next_ack_packet()
+            ack_packet_to_send = self._flows[flow_id].construct_next_ack_packet(packet.get_data_time())
             self.get_link().queue_packet(self.get_device_id(), ack_packet_to_send)
 
         return True
