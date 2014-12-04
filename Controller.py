@@ -249,7 +249,10 @@ class Controller(object):
 
         current_subplot = 0
 
-        for log_type in self._logs:
+        for log_type in ('flow-rate', 'window-size', 'link-rate', 'buffer-occupancy', 'packet-loss'):
+            if log_type not in self._logs:
+                continue
+
             device_logs = network_controller._logs[log_type]['devices']
 
             for device_name in device_logs:
