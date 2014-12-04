@@ -15,13 +15,22 @@ class HeapTuple(object):
     def as_tuple(self):
         return (self.t, self.method, self.args)
 
+
 class EventQueue(object):
-    
+    """The global event queue used in the network simulation.
+
+    Attributes:
+        priority_queue: The priority queue used for keeping track of all the
+            events that occur in the simulation. Since we are using a
+            discrete-event model for the network simulation, we need a data
+            structure that can efficiently tell us what the next event is.
+    """
+
     def __init__(self):
         self.priority_queue = []
 
-    # The given event will be executed in delta_t seconds.
     def add_event(self, t, method, args):
+        """The given event will be executed in delta_t seconds."""
         heaptuple = HeapTuple(t, method, args)
         heappush(self.priority_queue, heaptuple)
 

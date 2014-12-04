@@ -7,12 +7,12 @@ Ryan Batterman, Joseph Choi, Archan Luhar, Kevin Yang
 ## Running the program
 
 To run the program:
-```
+```bash
 python3 Controller.py -f [jsonfile]
 ```
 
 Example:
-```
+```bash
 python3 Controller.py -f test_cases/test0.json
 ```
 

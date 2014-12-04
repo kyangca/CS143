@@ -1,7 +1,15 @@
-from Packet import TCPPacket
 from Packet import PacketTypes
+from Packet import TCPPacket
+
+def debug_print(x):
+    """Function to use in place of print so that it can easily be disabled."""
+    # print(x)
+    pass
+
 
 class FlowStates(object):
+    """Enum for the different flow states in the TCP algorithms."""
+
     RenoSlowStartPart1 = 0
     RenoSlowStartPart2 = 1
     RenoSlowStartTransition = 2
@@ -12,18 +20,37 @@ class FlowStates(object):
     FastCA = 6
     FastFrFr = 7
 
-# A flow represents the transfer of data from one host to another.
+
 class Flow(object):
+    """A flow represents the transfer of data from one host to another.
+
+    Attributes:
+        __controller: The controller object.
+        __src_id: The id of the source device.
+        __dst_id: The id of the destination device.
+        __num_remaining_bytes: The remaining number of bytes to send in this
+            flow.
+        __sent_bytes: The number of bytes already sent in this flow.
+        __flow_id: The id of the flow.
+        __tcp_sequence_number: The sequence number as used in TCP.
+        __last_ack_number_received: The number of the last acknowledgement
+            received.
+        __num_acks_repeated: The number of repeated acknowledgements.
+        __window_size: The window size.
+        __tcp: The TCP algorithm to use specified as a string, e.g. 'reno' or
+            'fast'.
+    """
 
     NUM_ACKS_THRESHOLD = 7
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 2.0
-    FAST_ALPHA = 1.0 #TODO: Adopt .75(B/N) estimate Professor Low suggested
-    FAST_BASE_RTT = 1000000000000000 #Start off with a high base RTT
+    FAST_ALPHA = 1.0  # TODO: Adopt .75(B/N) estimate Professor Low suggested.
+    FAST_BASE_RTT = 1000000000000000 # Start off with a high base RTT.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
-    def __init__(self, controller, src_id, dst_id, flow_id, tcp="reno", num_bytes = 0):
+    def __init__(self, controller, src_id, dst_id, flow_id, tcp="reno",
+            num_bytes = 0):
         self.__controller = controller
         self.__src_id = src_id
         self.__dst_id = dst_id
@@ -35,24 +62,26 @@ class Flow(object):
         self.__num_acks_repeated = 0
         self.__window_size = 1.0
         self.__tcp = tcp  # TCP algorithm
-        print(tcp)
+        debug_print(tcp)
 
         self.__SSthreshold = float('inf')
-        if(tcp == "reno"):
+        if tcp == "reno":
             self.__state = FlowStates.RenoSlowStartPart1
-            print("in reno")
-        elif(tcp == "fast"):
+            debug_print("in reno")
+        elif tcp == "fast":
             self.__state = FlowStates.FastSlowStart
         else:
-            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
+            raise NotImplementedError(
+                "Unsupported TCP Congestion Control Algorithm")
 
         # Denotes a sequence number to retransmit.
         self.__fast_recovery_sequence_number = None
 
-        # e.g. if we receive TCP data packets of sequence numbers [1,2,3,7,8] then
-        # __max_contiguous_sequence_number = 3, __uncounted_sequence_numbers = [7,8]
-        self.__max_contiguous_sequence_number = -1 # nothing received yet.
-        # TODO: consider using an alternative data structure.
+        # e.g. if we receive TCP data packets of sequence numbers [1,2,3,7,8]
+        # then __max_contiguous_sequence_number = 3,
+        # __uncounted_sequence_numbers = [7,8]
+        self.__max_contiguous_sequence_number = -1  # Nothing received yet.
+        # TODO: Consider using an alternative data structure.
         self.__uncounted_sequence_numbers = {}
 
     # Returns whether or not the flow should continue ad infinitum.
@@ -75,20 +104,21 @@ class Flow(object):
         return self.__tcp
 
     def transition_to_slow_start_part_2(self):
-        print("Transitioned to reno state 2")
+        debug_print("Transitioned to reno state 2")
         self.__state = FlowStates.RenoSlowStartPart2
-        print (self.__tcp_sequence_number)
-        print (self.__src_id)
+        debug_print(self.__tcp_sequence_number)
+        debug_print(self.__src_id)
         src = self.__controller.devices[self.__src_id]
         src.send_next_packet(self)
 
     def receive_ack(self, ack_packet):
-        if (self.__tcp == "reno"):
+        if self.__tcp == "reno":
             self.receive_ack_reno(ack_packet)
-        elif (self.__tcp == "fast"):
+        elif self.__tcp == "fast":
             self.receive_ack_fast(ack_packet)
         else:
-            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
+            raise NotImplementedError(
+                "Unsupported TCP Congestion Control Algorithm")
 
         self.__controller.log(
             "window-size",
@@ -99,28 +129,29 @@ class Flow(object):
 
     def receive_ack_fast(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
-        if(self.__state == FlowStates.FastSlowStart):
-            print("TODO")
-        elif(self.__state == FlowStates.FastRetransmit):
-            print("TODO")
-        elif(self.__state == FlowStates.FastCA):
+        if self.__state == FlowStates.FastSlowStart:
+            debug_print("TODO")
+        elif self.__state == FlowStates.FastRetransmit:
+            debug_print("TODO")
+        elif self.__state == FlowStates.FastCA:
             rtt = -1
-            self.__window_size = (FAST_BASE_RTT/rtt)*self.__window_size + FAST_ALPHA
-        elif(self.__state == FlowStates.FastFrFr):
-            print("TODO")
+            self.__window_size = ((FAST_BASE_RTT / rtt) * self.__window_size +
+                FAST_ALPHA)
+        elif self.__state == FlowStates.FastFrFr:
+            debug_print("TODO")
         else:
             raise RuntimeError("Invalid state reached in FAST-TCP")
 
     def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
-        if (self.__state == FlowStates.RenoSlowStartPart1):
-            if (self.__last_ack_number_received == ack_number):
-                # Can't divide by 2 because we've increased the window size due to received
-                # packets.
+        if self.__state == FlowStates.RenoSlowStartPart1:
+            if self.__last_ack_number_received == ack_number:
+                # Can't divide by 2 because we've increased the window size due
+                # to received packets.
                 self.__SSthreshold = self.__window_size / 4
                 self.__window_size = 1.0
                 self.__state = FlowStates.RenoSlowStartTransition
-                print("slow start transition")
+                debug_print("slow start transition")
                 self.__tcp_sequence_number = ack_number
                 # Wait for the packets to timeout.
                 transition_time = self.__controller.get_current_time() + \
@@ -128,45 +159,46 @@ class Flow(object):
                 self.__controller.add_event(transition_time, self.transition_to_slow_start_part_2, [])
             else:
                 self.__window_size += 1
-                print (self.__window_size)
+                debug_print(self.__window_size)
                 self.__last_ack_number_received = ack_number
             return
-
-        elif (self.__state == FlowStates.RenoSlowStartTransition):
+        elif self.__state == FlowStates.RenoSlowStartTransition:
             return
-        elif (self.__state == FlowStates.RenoSlowStartPart2):
+        elif self.__state == FlowStates.RenoSlowStartPart2:
             # TODO: handle the case where this doesn't hold.
             #assert (self.__last_ack_number_received != ack_number)
-            if (self.__window_size < self.__SSthreshold):
+            if self.__window_size < self.__SSthreshold:
                 self.__window_size += 1
                 self.__lack_ack_number_received = ack_number
             else:
                 self.__state = FlowStates.RenoTransmit
 
-        if (self.__last_ack_number_received == ack_number):
-            self.__num_acks_repeated  += 1
-            if (self.__num_acks_repeated == self.NUM_ACKS_THRESHOLD - 1):
+        if self.__last_ack_number_received == ack_number:
+            self.__num_acks_repeated += 1
+            if self.__num_acks_repeated == self.NUM_ACKS_THRESHOLD - 1:
                 # Retransmit.
                 self.__fast_recovery_sequence_number = ack_number
                 # Store for when we break out of the repetitions.
                 self.__old_window_size = self.__window_size
-                self.__window_size = self.__window_size / 2 + self.NUM_ACKS_THRESHOLD - 1
-            elif (self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1):
+                self.__window_size = self.__window_size / 2 + \
+                    self.NUM_ACKS_THRESHOLD - 1
+            elif self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1:
                 self.__window_size += 1
             return
-        elif (ack_number > self.__tcp_sequence_number):
+        elif ack_number > self.__tcp_sequence_number:
             self.__tcp_sequence_number = ack_number
 
-        if (self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1):
+        if self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1:
             self.__window_size = self.__old_window_size / 2
         else:
-            print (self.__window_size)
+            debug_print(self.__window_size)
             self.__window_size += 1.0 / self.__window_size
         self.__num_acks_repeated = 0
         self.__last_ack_number_received = ack_number
 
     @staticmethod
     def flow_rate_aggregator(values, interval_length):
+        """Returns the average flow rate in megabits per second (Mbps)."""
         return sum(values) / float(interval_length) * 8.0 / 1000000.0
 
     def receive_data(self, data_packet):
@@ -180,29 +212,33 @@ class Flow(object):
 
         sequence_number = data_packet.get_sequence_number()
         self.__uncounted_sequence_numbers[sequence_number] = True
-        while (self.__max_contiguous_sequence_number + 1 in self.__uncounted_sequence_numbers):
+        while (self.__max_contiguous_sequence_number + 1 in
+                self.__uncounted_sequence_numbers):
             self.__max_contiguous_sequence_number += 1
-            self.__uncounted_sequence_numbers.pop(self.__max_contiguous_sequence_number)
+            self.__uncounted_sequence_numbers.pop(
+                self.__max_contiguous_sequence_number)
 
     def window_is_full(self):
-        return (self.__last_ack_number_received + self.__window_size <= self.__tcp_sequence_number)
+        return (self.__last_ack_number_received + self.__window_size <=
+            self.__tcp_sequence_number)
 
     def construct_next_data_packet(self):
-        if(self.__tcp == "reno"):
+        if self.__tcp == "reno":
             return self.construct_next_data_packet_reno()
-        elif(self.__tcp == "fast"):
+        elif self.__tcp == "fast":
             return self.construct_next_data_packet_fast()
         else:
-            raise NotImplementedError("Unsupported TCP Congestion Control Algorithm")
+            raise NotImplementedError(
+                "Unsupported TCP Congestion Control Algorithm")
 
     def construct_next_data_packet_fast(self):
-        print("TODO")
+        debug_print("TODO")
 
     def construct_next_data_packet_reno(self):
-
         assert (self.is_infinite_flow() or self.num_remaining_bytes() > 0)
-        if (self.__state == FlowStates.RenoSlowStartTransition):
-            # Don't transmit any more packets until all the remaining ones are timed out.
+        if self.__state == FlowStates.RenoSlowStartTransition:
+            # Don't transmit any more packets until all the remaining ones are
+            # timed out.
             return False
         # TODO: fix this calculation correct -- how many user bytes can actually
         # be stored in a packet?
@@ -213,12 +249,12 @@ class Flow(object):
         sequence_number = self.__tcp_sequence_number
         ack_number = 0
 
-        if (self.__fast_recovery_sequence_number is not None):
+        if self.__fast_recovery_sequence_number is not None:
             sequence_number = self.__fast_recovery_sequence_number
             self.__fast_recovery_sequence_number = None
         else:
             sequence_number = self.__tcp_sequence_number
-#            print(self.__tcp_sequence_number)
+#            debug_print(self.__tcp_sequence_number)
             self.__tcp_sequence_number += 1
 
         return TCPPacket(self.__controller, self.get_src_id(),

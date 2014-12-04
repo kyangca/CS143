@@ -1,6 +1,26 @@
 class Link(object):
-    # throughput is in bytes / sec, link_delay in secs,
-    # buffer_size is in bytes.
+    """Links connect hosts and routers, and carry packets from one end to the
+    other. Every link has a specified capacity in bits per second. It is assumed
+    that every host and router can process an infinite amount of incoming data
+    instantaneously, but outgoing data must sit on a link buffer until the link
+    is free. Link buffers are first-in, first-out. Packets that try to enter a
+    full buffer will be dropped.
+
+    Attributes:
+        __controller: The controller object.
+        __left_device: The device on the left side of the link.
+        __right_device: The device on the right side of the link.
+        __throughput: The throughput in bytes per second.
+        __link_delay: The link delay in seconds.
+        __buffer_size: The buffer size in bytes.
+        __rightward_buffer: The rightward buffer.
+        __leftward_buffer: The leftward buffer.
+        __link_id: The id of the link.
+        __next_leftward_start_transmission_time: The next start transmission
+            time for the left.
+        __next_rightward_start_transmission_time: The next start transmission
+            time for the right.
+    """
     def __init__(
         self,
         controller,
@@ -25,6 +45,7 @@ class Link(object):
 
     @staticmethod
     def bytes_in_buffer(buf):
+        """Returns the total number of bytes in the buffer."""
         return sum([x.get_size() for x in buf])
 
     def num_packets_in_buffers(self):
@@ -41,13 +62,15 @@ class Link(object):
 
     @staticmethod
     def link_rate_aggregator(values, interval_length):
+        """Returns the average link rate in megabits per second (Mbps)."""
         return sum(values) / float(interval_length) * 8.0 / 1000000.0
 
-    # Called after the packet is put on the wire (e.g. after 1024 / throughput seconds.
     def packet_on_wire_handler(self, rightward_direction):
+        """Called after the packet is put on the wire (e.g. after 1024 /
+        throughput seconds)."""
         receive_time = self.__link_delay + self.__controller.get_current_time()
 
-        if (rightward_direction):
+        if rightward_direction:
             packet = self.__rightward_buffer.pop(0)
             device = self.__right_device
         else:
@@ -68,44 +91,51 @@ class Link(object):
             [self, packet],
         )
 
-        # if (packet.is_TCP_packet()):
+        # if packet.is_TCP_packet():
         #     print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number(),
         #            "ack # = ", packet.get_ack_number(), "t =",
         #            self.get_controller().get_current_time())
         # else:
         #     print ("Running BF", self.get_link_id())
 
-    # I assume that routers can know what device is on the other end of the
-    # router.
-    # TODO: Ask Jianchi to make sure this is correct.
     def opposite_device(self, from_device_id):
-        if (from_device_id == self.__left_device.get_device_id()):
+        """I assume that routers can know what device is on the other end of the
+        router. TODO: Ask Jianchi to make sure this is correct."""
+        if from_device_id == self.__left_device.get_device_id():
             return self.__right_device
-        elif (from_device_id == self.__right_device.get_device_id()):
+        elif from_device_id == self.__right_device.get_device_id():
             return self.__left_device
         else:
             raise Exception("Unknown device id.")
 
-    # Returns the estimated amount of time that will be required to send a
-    # packet from the given attached device across this link.
     def estimate_cost(self, from_device_id):
-        # TODO: Ask Jianchi how to do correct calculations.
-        if (from_device_id == self.__left_device.get_device_id()):
+        """Returns the estimated amount of time that will be required to send a
+        packet from the given attached device across this link. TODO: Ask
+        Jianchi how to do correct calculations."""
+        if from_device_id == self.__left_device.get_device_id():
             return max(0, self.__next_rightward_start_transmission_time -
                        self.get_controller().get_current_time())
-        elif (from_device_id == self.__right_device.get_device_id()):
+        elif from_device_id == self.__right_device.get_device_id():
             return max(0, self.__next_leftward_start_transmission_time -
                        self.get_controller().get_current_time())
         else:
             raise Exception("Invalid device id.")
 
-    # Returns whether or not the request was successful.
     def queue_packet(self, from_device_id, packet):
-        # update transmission times in case we haven't done things in a while
+        """Queues a packet. Returns whether or not the request was successful.
+
+        Args:
+            from_device_id: The originating device of the packet.
+            packet: The packet object.
+        """
+
+        # Update transmission times in case we haven't done things in a while.
         self.__next_rightward_start_transmission_time = \
-            max(self.__next_rightward_start_transmission_time, self.__controller.get_current_time())
+            max(self.__next_rightward_start_transmission_time,
+                self.__controller.get_current_time())
         self.__next_leftward_start_transmission_time = \
-            max(self.__next_leftward_start_transmission_time, self.__controller.get_current_time())
+            max(self.__next_leftward_start_transmission_time,
+                self.__controller.get_current_time())
 
         self.__controller.log(
             "buffer-occupancy",
@@ -114,34 +144,40 @@ class Link(object):
             ylabel="buffer occupancy (pkts)",
         )
 
-        # figure out direction and buffer
-        if (from_device_id == self.__left_device.get_device_id()):
+        # Figure out direction and buffer.
+        if from_device_id == self.__left_device.get_device_id():
             buf = self.__rightward_buffer
             rightward_direction = True
-        elif (from_device_id == self.__right_device.get_device_id()):
+        elif from_device_id == self.__right_device.get_device_id():
             buf = self.__leftward_buffer
             rightward_direction = False
         else:
             raise Exception("Invalid device id")
 
-        # Reject if buffer full
-        if (self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size()):
+        # Reject if buffer full.
+        if self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size():
             return False
 
-        # Put packet in buffer and add packet on wire event
+        # Put packet in buffer and add packet on wire event.
         buf.append(packet)
         transmission_time = float(packet.get_size()) / self.get_throughput()
-        if (rightward_direction):
+        if rightward_direction:
             # Add an event for when the packet is on the wire.
             self.__next_rightward_start_transmission_time += transmission_time
-            self.__next_leftward_start_transmission_time = self.__next_rightward_start_transmission_time + self.get_link_delay()
-            self.__controller.add_event(self.__next_rightward_start_transmission_time,
-                                 self.packet_on_wire_handler, [True])
+            self.__next_leftward_start_transmission_time = \
+                self.__next_rightward_start_transmission_time + \
+                self.get_link_delay()
+            self.__controller.add_event(
+                self.__next_rightward_start_transmission_time,
+                self.packet_on_wire_handler, [True])
         else:
             self.__next_leftward_start_transmission_time += transmission_time
-            self.__next_rightward_start_transmission_time = self.__next_leftward_start_transmission_time + self.get_link_delay()
-            self.__controller.add_event(self.__next_leftward_start_transmission_time,
-                                 self.packet_on_wire_handler, [False])
+            self.__next_rightward_start_transmission_time = \
+                self.__next_leftward_start_transmission_time + \
+                self.get_link_delay()
+            self.__controller.add_event(
+                self.__next_leftward_start_transmission_time,
+                self.packet_on_wire_handler, [False])
 
         return True
 
