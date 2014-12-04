@@ -15,12 +15,13 @@ class FlowStates(object):
     RenoSlowStartTransition = 2
     RenoFastRecovery = 3
     # TODO: Generalize Flow so it uses state transitions more effectively.
-    RenoTransmit = 3
+    RenoTransmit = 4
     #FastSlowStart = 4
     #FastRetransmit = 5
     #FastCA = 6
     #FastFrFr = 7
-    RenoCA = 4
+    RenoCA = 5
+    Fast = 6
 
 class Flow(object):
     """A flow represents the transfer of data from one host to another.
@@ -70,7 +71,7 @@ class Flow(object):
             self.__state = FlowStates.RenoSlowStartPart1
             debug_print("in reno")
         elif tcp == "fast":
-            self.__state = FlowStates.FastSlowStart
+            self.__state = FlowStates.Fast
         else:
             raise NotImplementedError(
                 "Unsupported TCP Congestion Control Algorithm")
