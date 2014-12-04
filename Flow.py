@@ -116,7 +116,7 @@ class Flow(object):
     def transition_to_retransmit(self, next_tcp_sequence_number, SSthreshold):
         # If this condition isn't satisfied, then FR worked.
         if (next_tcp_sequence_number > self.__last_ack_number_received):
-            print("Retransmitting flow", self.__flow_id, "ssthresh=", SSthreshold)
+            # print("Retransmitting flow", self.__flow_id, "ssthresh=", SSthreshold)
             # Transition into slow start.
             self.__SSthreshold = SSthreshold
             self.__window_size = 1.0
@@ -209,7 +209,7 @@ class Flow(object):
                 self.__window_size = self.__window_size / 2 + \
                     self.NUM_ACKS_THRESHOLD - 1
                 self.__state = FlowStates.RenoFastRecovery
-                print("Fast recovery, flow=", self.__flow_id, "old window size = ", self.__old_window_size)
+                # print("Fast recovery, flow=", self.__flow_id, "old window size = ", self.__old_window_size)
                 self.__tcp_sequence_number -= 1
                 # TODO: figure out how long to wait before doing a retransmission.
                 transition_time = self.__controller.get_current_time() + 0.5
@@ -268,8 +268,9 @@ class Flow(object):
     def construct_next_data_packet_reno(self):
 
         if (self.i % 100 == 0):
-            print (self.i, "flow=", self.__flow_id, "remaining bytes=", self.num_remaining_bytes(), \
-                   self.__state, "window size=", self.__window_size, "state=", self.__state, "ssthresh=", self.__SSthreshold)
+            # print (self.i, "flow=", self.__flow_id, "remaining bytes=", self.num_remaining_bytes(), \
+            #       self.__state, "window size=", self.__window_size, "state=", self.__state, "ssthresh=", self.__SSthreshold)
+            pass
         self.i += 1
 
         if not (self.is_infinite_flow() or self.num_remaining_bytes() > 0):
