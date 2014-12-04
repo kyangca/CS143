@@ -41,7 +41,7 @@ class Controller(object):
         self._debug = options['debug']
         self._current_time = 0.0
         self._log_interval_start = 0.0
-        self._log_interval_length = 1.0
+        self._log_interval_length = 2.0
         self._event_queue = EventQueue()
 
         self._links = {}

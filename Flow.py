@@ -45,9 +45,9 @@ class Flow(object):
     NUM_ACKS_THRESHOLD = 3
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
-    RENO_SLOW_START_TIMEOUT = 1.0
+    RENO_SLOW_START_TIMEOUT = 2.0
     FAST_ALPHA = 1.0  # TODO: Adopt .75(B/N) estimate Professor Low suggested.
-    FAST_BASE_RTT = 1000000000000000 # Start off with a high base RTT.
+    FAST_BASE_RTT = -1 # Start off with a high base RTT.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
     def __init__(self, controller, src_id, dst_id, flow_id, tcp="reno",
@@ -142,18 +142,18 @@ class Flow(object):
 
     def receive_ack_fast(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
-        if self.__state == FlowStates.FastSlowStart:
-            debug_print("TODO")
-        elif self.__state == FlowStates.FastRetransmit:
-            debug_print("TODO")
-        elif self.__state == FlowStates.FastCA:
-            rtt = -1
-            self.__window_size = ((FAST_BASE_RTT / rtt) * self.__window_size +
-                FAST_ALPHA)
-        elif self.__state == FlowStates.FastFrFr:
-            debug_print("TODO")
+        rtt = self.__controller.get_current_time() - ack_packet.get_data_time()
+        print("BaseRTT is: " + str(self.FAST_BASE_RTT) + ", rtt is: " + str(rtt) + "\n")
+        print("Window size was: " + str(self.__window_size))
+        if(self.FAST_BASE_RTT == -1):
+            self.__window_size = self.__window_size + self.FAST_ALPHA
+            self.FAST_BASE_RTT = rtt
+            print("Window size is: " + str(self.__window_size))
         else:
-            raise RuntimeError("Invalid state reached in FAST-TCP")
+            self.__window_size = (self.FAST_BASE_RTT/rtt)*self.__window_size + self.FAST_ALPHA
+            if(self.FAST_BASE_RTT > rtt):
+                self.FAST_BASE_RTT = rtt
+            print("Window size is: " + str(self.__window_size))
 
     def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
@@ -263,7 +263,39 @@ class Flow(object):
                 "Unsupported TCP Congestion Control Algorithm")
 
     def construct_next_data_packet_fast(self):
-        debug_print("TODO")
+        if (self.i % 100 == 0):
+            print (self.i, "flow=", self.__flow_id, "remaining bytes=", self.num_remaining_bytes(), \
+                   self.__state, "window size=", self.__window_size, "state=", self.__state)#, "ssthresh=", self.__SSthreshold)
+        self.i += 1
+        print("Starting fast data construction")
+        if not (self.is_infinite_flow() or self.num_remaining_bytes() > 0):
+            return False
+        #if self.__state == FlowStates.RenoSlowStartTransition:
+            # Don't transmit any more packets until all the remaining ones are
+            # timed out.
+        #    return False
+        # TODO: fix this calculation correct -- how many user bytes can actually
+        # be stored in a packet?
+        user_bytes = min(self.DATA_MAX_PACKET_SIZE, self.num_remaining_bytes())
+        self.__num_remaining_bytes -= user_bytes
+        self.__sent_bytes += user_bytes
+        packet_type = PacketTypes.TCP_DATA
+        sequence_number = self.__tcp_sequence_number
+        ack_number = 0
+
+        if self.__fast_recovery_sequence_number is not None:
+            sequence_number = self.__fast_recovery_sequence_number
+            self.__fast_recovery_sequence_number = None
+        else:
+            sequence_number = self.__tcp_sequence_number
+#            debug_print(self.__tcp_sequence_number)
+            self.__tcp_sequence_number += 1
+
+        t = self.__controller.get_current_time()
+        print("Ending fast data construction")
+        return TCPPacket(self.__controller, self.get_src_id(),
+                self.get_dst_id(), user_bytes, packet_type,
+                         sequence_number, ack_number, self.get_flow_id(), t, t)
 
     def construct_next_data_packet_reno(self):
 
@@ -295,13 +327,17 @@ class Flow(object):
 #            debug_print(self.__tcp_sequence_number)
             self.__tcp_sequence_number += 1
 
+        t = self.__controller.get_current_time()
+
         return TCPPacket(self.__controller, self.get_src_id(),
                 self.get_dst_id(), user_bytes, packet_type,
-                sequence_number, ack_number, self.get_flow_id())
+                         sequence_number, ack_number, self.get_flow_id(), t, t)
 
-    def construct_next_ack_packet(self):
+    def construct_next_ack_packet(self, data_pack_time):
+        print("Beginning ACK Construction")
         sequence_number = 0
         ack_number = self.__max_contiguous_sequence_number + 1
+        print("Ending ACK Construction")
         return TCPPacket(
             self.__controller,
             self.get_dst_id(),
@@ -311,4 +347,6 @@ class Flow(object):
             sequence_number,
             ack_number,
             self.get_flow_id(),
+            data_pack_time,
+            self.__controller.get_current_time()
         )
