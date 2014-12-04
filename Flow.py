@@ -118,7 +118,7 @@ class Flow(object):
         if (next_tcp_sequence_number < self.__last_ack_number_received):
             # Transition into slow start.
             self.__SSthreshold = SSthreshold
-            self.window_size = 1.0
+            self.__window_size = 1.0
             self.__state = FlowStates.RenoSlowStartPart2
 
     def receive_ack(self, ack_packet):
@@ -144,7 +144,7 @@ class Flow(object):
             self.__window_size = self.__window_size + self.FAST_ALPHA
             self.FAST_BASE_RTT = rtt
         else:
-            self.window_size = (self.FAST_BASE_RTT/rtt)*self.window_size + self.FAST_ALPHA
+            self.__window_size = (self.FAST_BASE_RTT/rtt)*self.__window_size + self.FAST_ALPHA
             if(rtt < self.FAST_BASE_RTT):
                 self.FAST_BASE_RTT = rtt
 
