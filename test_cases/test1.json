@@ -80,7 +80,8 @@
       "right_device_id": "R2",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 64000
+      "buffer_size": 64000,
+      "show_on_plot": true
     },
     {
       "id": "L2",
@@ -88,7 +89,8 @@
       "right_device_id": "R3",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 64000
+      "buffer_size": 64000,
+      "show_on_plot": true
     },
     {
       "id": "L3",
@@ -122,7 +124,8 @@
       "dst_id": "H2",
       "num_bytes": 20000000,
       "start_time": 0.5,
-      "tcp": "reno"
+      "tcp": "reno",
+      "show_on_plot": true
     }
   ]
 }

@@ -1,12 +1,21 @@
 class PacketTypes(object):
+    """Enum for the different packet types."""
 
     TCP_DATA = 0
     TCP_ACK = 1
-    # Bellman-Ford packet.
-    BF_DATA = 2
+    BF_DATA = 2  # Bellman-Ford packet.
 
 
 class Packet(object):
+    """Class that represents a packet in the network simulation.
+
+    Attributes:
+        _controller: The controller object.
+        _src_id: The id of the source device.
+        _dst_id: The id of the destination device.
+        _size: The size of the packet in bytes.
+        packet_type: The enum value representing the type of packet.
+    """
 
     def __init__(self, controller, src_id, dst_id, size, packet_type):
         self._controller = controller
@@ -39,6 +48,13 @@ class Packet(object):
 
 
 class TCPPacket(Packet):
+    """Class that represents a packet for TCP in the network simulation.
+
+    Attributes:
+        _sequence_number: The sequence number used in TCP.
+        _ack_number: The acknowledgement number used in TCP.
+        _flow_id: The id of the flow for this TCP packet.
+    """
 
     def __init__(self, controller, src_id, dst_id, size, packet_type,
                  sequence_number, ack_number, flow_id, data_time, ack_time):
@@ -67,6 +83,14 @@ class TCPPacket(Packet):
 
 
 class BFPacket(Packet):
+    """Class that represents a packet for implementing the Bellman-Ford
+    algorithm in the network simulation.
+
+    Attributes:
+        _host_id: The id of the host.
+        _cost: The cost for use in the Bellman-Ford algorithm.
+    """
+
     def __init__(self, controller, src_id, dst_id, size, host_id, cost):
         super().__init__(controller, src_id, dst_id, size, PacketTypes.BF_DATA)
         self._host_id = host_id

@@ -11,12 +11,37 @@ import json
 
 class Controller(object):
     """The main controller class.
+
+    Attributes:
+        _filename: The filename of the JSON representation of the network that
+            will be used in the simulation.
+        _debug: The debug data for the simualtion.
+        _current_time: The current time in the simulation, in seconds.
+        _log_interval_start: The start time of collecting log data, in seconds.
+        _log_interval_length: The length of time for collecting log data, in
+            seconds.
+        _event_queue: The event queue object, which keeps track of the events
+            that happen and the order in which they happen.
+        _links: The list of links in the network.
+        _devices: The list of devices (hosts and routers) in the network.
+        _flows: The list of flows in the network, which represents the data
+            source and destination.
+        _logs: The logs resulting from the simulation.
+        _show_on_plot: The set of links to show on the plot.
     """
 
     def __init__(self, options):
+        """Initializes the Controller instance.
+
+        Args:
+            options: A dictionary with option attributes. Currently supported
+                options are 'filename' and 'debug'.
+        """
         self._filename = options['filename']
         self._debug = options['debug']
         self._current_time = 0.0
+        self._log_interval_start = 0.0
+        self._log_interval_length = 0.1
         self._event_queue = EventQueue()
 
         self._links = {}
@@ -24,7 +49,9 @@ class Controller(object):
         self._flows = {}
 
         self._logs = {}
+        self._show_on_plot = set()
 
+        # Opens the file and parses the JSON representation of the network.
         with open(self._filename) as f:
             json_network = json.loads(f.read())
 
@@ -47,6 +74,8 @@ class Controller(object):
                 buffer_size=json_link['buffer_size'],
                 link_id=link_id,
                 )
+            if 'show_on_plot' in json_link and json_link['show_on_plot']:
+                self._show_on_plot.add(link_id)
 
         for json_host in json_hosts:
             host_id = json_host['id']
@@ -59,7 +88,7 @@ class Controller(object):
         for json_router in json_routers:
             router_id = json_router['id']
             # Get the statically generated routing table.
-            if ("routing_table" in json_router):
+            if "routing_table" in json_router:
                 routing_table = json_router["routing_table"]
             else:
                 routing_table = {}
@@ -105,6 +134,8 @@ class Controller(object):
             self._event_queue.add_event(flow_start, src_host.send_next_packet,
                 [flow])
             self._flows[flow_id] = True
+            if 'show_on_plot' in json_flow and json_flow['show_on_plot']:
+                self._show_on_plot.add(flow_id)
         self.devices = self._devices
 
     def add_event(self, *args):
@@ -116,11 +147,74 @@ class Controller(object):
     def remove_flow(self, flow):
         self._flows.pop(flow.get_flow_id())
 
-    def log(self, device_type, device_name):
-        if device_type not in self._logs:
-            self._logs[device_type] = defaultdict(list)
+    def _process_temp_interval_values(self):
+        """Moves data point into X, Y lists and resets all temp intervals."""
 
-        self._logs[device_type][device_name].append(self._current_time)
+        interval_length = min(self._log_interval_length,
+            self._current_time - self._log_interval_start)
+
+        for log_type in self._logs:
+            devices_logs = self._logs[log_type]['devices']
+
+            for device_name in devices_logs:
+                device_log = self._logs[log_type]['devices'][device_name]
+
+                temp_values = device_log['temp_interval_values']
+                if temp_values:
+                    time = self._log_interval_start + interval_length / 2.0
+                    aggregated_value = self._logs[log_type] \
+                        ['values_aggregator'](temp_values, interval_length)
+
+                    device_log['X'].append(time)
+                    device_log['Y'].append(aggregated_value)
+
+                    device_log['temp_interval_values'] = []
+
+        self._log_interval_start = int(self._current_time /
+            self._log_interval_length) * self._log_interval_length
+
+    def log(
+        self,
+        log_type,
+        device_name,
+        value,
+        values_aggregator=lambda values, interval_length:
+            sum(values) / float(len(values)),
+        ylabel=None,
+    ):
+        """Logs the data using a given aggregator.
+
+        Args:
+            log_type: The type of log.
+            device_name: The name of the device.
+            value: The value to log.
+            values_aggregator: Function that takes values, and aggregates them.
+                By default, the average aggregator is used.
+            ylabel: The label on the y-axis. By default, the log type is used.
+        """
+        if ylabel is None:
+            ylabel = log_type
+
+        if log_type not in self._logs:
+            self._logs[log_type] = {
+                'devices': {},
+                'ylabel': ylabel,
+                'values_aggregator': values_aggregator,
+            }
+
+        if device_name not in self._logs[log_type]['devices']:
+            self._logs[log_type]['devices'][device_name] = {
+                'temp_interval_values': [],
+                'X': [],
+                'Y': [],
+            }
+
+        if (self._current_time - self._log_interval_length >=
+                self._log_interval_start):
+            self._process_temp_interval_values()
+
+        self._logs[log_type]['devices'][device_name]['temp_interval_values'] \
+            .append(value)
 
     def run(self, num_seconds):
         """Runs the simulation.
@@ -128,37 +222,52 @@ class Controller(object):
         Args:
             num_seconds: The number of seconds to run the simulation.
         """
-        while (not self._event_queue.is_empty() and self.get_current_time() <
-                num_seconds and len(self._flows) > 0):
+        while (
+            not self._event_queue.is_empty()
+            and self.get_current_time() < num_seconds
+            and len(self._flows) > 0
+        ):
             event = self._event_queue.pop_event()
-            if (self._debug):
-                # TODO: add better debugging here.
-                print(event)
+            # if self._debug:
+            #     # TODO: add better debugging here.
+            #     print(event)
             event_time, event_method, event_args = event
             self._current_time = event_time
             event_method(*event_args)
 
     def plot(self):
-        figure = 1
-        for device_type in network_controller._logs:
-            pyplot.figure(figure)
-            pyplot.title(device_type)
-            for device_name in network_controller._logs[device_type]:
-                X = []
-                Y = []
-                times = network_controller._logs[device_type][device_name]
-                for idx, t in enumerate(times):
-                    low_idx = idx
-                    while (low_idx >= 1 and  t - times[low_idx - 1] <= 0.8):
-                        low_idx -= 1
-                    if (times[idx] == times[low_idx]):
-                        continue
-                    y_val = 1024 * (idx - low_idx) / (times[idx] - times[low_idx])
-                    X.append(t)
-                    Y.append(y_val)
-                pyplot.plot(X, Y)
-            figure += 1
+        """Plots the logged data."""
+        self._process_temp_interval_values()
+
+        num_subplots = len(self._logs)
+
+        if num_subplots == 1:
+            f, ax = pyplot.subplots(num_subplots, sharex=True)
+            axarr = [ax]
+        elif num_subplots > 1:
+            f, axarr = pyplot.subplots(num_subplots, sharex=True)
+
+        current_subplot = 0
+
+        for log_type in self._logs:
+            device_logs = network_controller._logs[log_type]['devices']
+
+            for device_name in device_logs:
+                if device_name in self._show_on_plot:
+                    device_log = network_controller._logs[log_type]['devices'] \
+                        [device_name]
+
+                    X = device_log['X']
+                    Y = device_log['Y']
+                    axarr[current_subplot].plot(X, Y, label=device_name)
+                    axarr[current_subplot].set_ylabel(network_controller \
+                        ._logs[log_type]['ylabel'])
+            axarr[current_subplot].legend()
+            current_subplot += 1
+
+        axarr[-1].set_xlabel('time (s)')
         pyplot.show()
+
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -171,4 +280,5 @@ if __name__ == '__main__':
 
     network_controller = Controller(vars(options))
     network_controller.run(float('inf'))
+
     network_controller.plot()

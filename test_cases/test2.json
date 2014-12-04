@@ -114,7 +114,8 @@
       "right_device_id": "R2",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 128000
+      "buffer_size": 128000,
+      "show_on_plot": true
     },
     {
       "id": "L2",
@@ -122,7 +123,8 @@
       "right_device_id": "R3",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 128000
+      "buffer_size": 128000,
+      "show_on_plot": true
     },
     {
       "id": "L3",
@@ -130,7 +132,8 @@
       "right_device_id": "R4",
       "throughput": 10000000,
       "link_delay": 0.01,
-      "buffer_size": 128000
+      "buffer_size": 128000,
+      "show_on_plot": true
     },
     {
       "id": "L4",
@@ -188,7 +191,8 @@
       "dst_id": "T1",
       "num_bytes": 35000000,
       "start_time": 0.5,
-      "tcp": "reno"
+      "tcp": "reno",
+      "show_on_plot": true
     },
     {
       "id": "F2",
@@ -196,7 +200,8 @@
       "dst_id": "T2",
       "num_bytes": 15000000,
       "start_time": 10,
-      "tcp": "reno"
+      "tcp": "reno",
+      "show_on_plot": true
     },
     {
       "id": "F3",
@@ -204,7 +209,8 @@
       "dst_id": "T3",
       "num_bytes": 30000000,
       "start_time": 20,
-      "tcp": "reno"
+      "tcp": "reno",
+      "show_on_plot": true
     }
   ]
 }
