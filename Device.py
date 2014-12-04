@@ -48,6 +48,9 @@ class Host(Device):
         self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
+        t = self.get_controller().get_current_time() + 3.0
+        self.get_controller().add_event(t, self.send_next_packet, [flow])
+
         while (not flow.window_is_full()):
             packet = flow.construct_next_data_packet()
             # This operation fails if e.g. we're waiting for the network to
