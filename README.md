@@ -28,7 +28,7 @@ contain a single object, consisting of the following keys:
   * *id* - The id of the router device, usually specified as the character 'R' followed by the id number, starting at 1.
   * *links* - An array of link ids of the links that are connected to the host.
   * *routing_table* - The routing table mapping host ids to link ids.
-  * *BFFreq* The frequency to use with the Bellman-Ford algorithm.
+  * *BFfreq* The frequency to use with the Bellman-Ford algorithm.
 * **hosts**
   * *id* - The id of the host device, usually specified as the character 'H' followed by the id number, starting at 1.
   * *links* - An array of link ids of the links that are connected to the host.
