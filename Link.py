@@ -121,6 +121,10 @@ class Link(object):
         else:
             raise Exception("Invalid device id.")
 
+    @staticmethod
+    def packet_loss_aggregator(values, interval_length):
+        return int(sum(values))
+
     def queue_packet(self, from_device_id, packet):
         """Queues a packet. Returns whether or not the request was successful.
 
@@ -156,7 +160,24 @@ class Link(object):
 
         # Reject if buffer full.
         if self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size():
+            # Log the packet loss, we are dropping this packet
+            self.__controller.log(
+                "packet-loss",
+                self.__link_id,
+                1,
+                values_aggregator=self.packet_loss_aggregator,
+                ylabel="packet loss (pkts)",
+            )
             return False
+        else:
+            # Log that packet not lost
+            self.__controller.log(
+                "packet-loss",
+                self.__link_id,
+                0,
+                values_aggregator=self.packet_loss_aggregator,
+                ylabel="packet loss (pkts)",
+            )
 
         # Put packet in buffer and add packet on wire event.
         buf.append(packet)
