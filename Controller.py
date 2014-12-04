@@ -11,9 +11,32 @@ import json
 
 class Controller(object):
     """The main controller class.
+
+    Attributes:
+        _filename: The filename of the JSON representation of the network that
+            will be used in the simulation.
+        _debug: The debug data for the simualtion.
+        _current_time: The current time in the simulation, in seconds.
+        _log_interval_start: The start time of collecting log data, in seconds.
+        _log_interval_length: The length of time for collecting log data, in
+            seconds.
+        _event_queue: The event queue object, which keeps track of the events
+            that happen and the order in which they happen.
+        _links: The list of links in the network.
+        _devices: The list of devices (hosts and routers) in the network.
+        _flows: The list of flows in the network, which represents the data
+            source and destination.
+        _logs: The logs resulting from the simulation.
+        _show_on_plot: The set of links to show on the plot.
     """
 
     def __init__(self, options):
+        """Initializes the Controller instance.
+
+        Args:
+            options: A dictionary with option attributes. Currently supported
+                options are 'filename' and 'debug'.
+        """
         self._filename = options['filename']
         self._debug = options['debug']
         self._current_time = 0.0
@@ -28,6 +51,7 @@ class Controller(object):
         self._logs = {}
         self._show_on_plot = set()
 
+        # Opens the file and parses the JSON representation of the network.
         with open(self._filename) as f:
             json_network = json.loads(f.read())
 
