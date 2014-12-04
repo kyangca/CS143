@@ -30,7 +30,6 @@ class EventQueue(object):
         self.priority_queue = []
 
     def add_event(self, t, method, args):
-        """The given event will be executed in delta_t seconds."""
         heaptuple = HeapTuple(t, method, args)
         heappush(self.priority_queue, heaptuple)
 

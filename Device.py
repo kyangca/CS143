@@ -55,7 +55,6 @@ class Host(Device):
             if packet:
                 if (not self.get_link().queue_packet(self.get_device_id(),
                         packet)):
-                    # print(packet.get_sequence_number())
                     pass
 
                 if flow.is_infinite_flow() or flow.num_remaining_bytes() > 0:

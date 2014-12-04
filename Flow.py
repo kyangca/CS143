@@ -13,12 +13,13 @@ class FlowStates(object):
     RenoSlowStartPart1 = 0
     RenoSlowStartPart2 = 1
     RenoSlowStartTransition = 2
+    RenoFastRecovery = 3
     # TODO: Generalize Flow so it uses state transitions more effectively.
-    RenoTransmit = 3
-    FastSlowStart = 4
-    FastRetransmit = 5
-    FastCA = 6
-    FastFrFr = 7
+    RenoCA = 4
+    FastSlowStart = 5
+    FastRetransmit = 6
+    FastCA = 7
+    FastFrFr = 8
 
 
 class Flow(object):
@@ -41,7 +42,7 @@ class Flow(object):
             'fast'.
     """
 
-    NUM_ACKS_THRESHOLD = 7
+    NUM_ACKS_THRESHOLD = 3
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 2.0
@@ -111,6 +112,14 @@ class Flow(object):
         src = self.__controller.devices[self.__src_id]
         src.send_next_packet(self)
 
+    def transition_to_retransmit(self, next_tcp_sequence_number, SSthreshold):
+        # If this condition isn't satisfied, then FR worked.
+        if (next_tcp_sequence_number < self.__last_ack_number_received):
+            # Transition into slow start.
+            self.__SSthreshold = SSthreshold
+            self.window_size = 1.0
+            self.__state = FlowStates.RenoSlowStartPart2
+
     def receive_ack(self, ack_packet):
         if self.__tcp == "reno":
             self.receive_ack_reno(ack_packet)
@@ -144,11 +153,12 @@ class Flow(object):
 
     def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
+
         if self.__state == FlowStates.RenoSlowStartPart1:
             if self.__last_ack_number_received == ack_number:
                 # Can't divide by 2 because we've increased the window size due
                 # to received packets.
-                self.__SSthreshold = self.__window_size / 4
+                self.__SSthreshold = self.__window_size / 2
                 self.__window_size = 1.0
                 self.__state = FlowStates.RenoSlowStartTransition
                 debug_print("slow start transition")
@@ -156,6 +166,8 @@ class Flow(object):
                 # Wait for the packets to timeout.
                 transition_time = self.__controller.get_current_time() + \
                                   self.RENO_SLOW_START_TIMEOUT
+                self.__state = FlowStates.RenoSlowStartTransition
+
                 self.__controller.add_event(transition_time, self.transition_to_slow_start_part_2, [])
             else:
                 self.__window_size += 1
@@ -170,31 +182,44 @@ class Flow(object):
             if self.__window_size < self.__SSthreshold:
                 self.__window_size += 1
                 self.__lack_ack_number_received = ack_number
+                
             else:
-                self.__state = FlowStates.RenoTransmit
+                self.__state = FlowStates.RenoCA
+        elif self.__state == FlowStates.RenoCA:
+            debug_print(self.__window_size)
+            self.__window_size += 1.0 / self.__window_size
+        elif self.__state == FlowStates.RenoFastRecovery and \
+            self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1 and \
+            ack_number > self.__last_ack_number_received:
+            self.__window_size = self.__old_window_size / 4
+            self.__state = FlowStates.RenoCA
+            self.__num_acks_repeated = 0
 
-        if self.__last_ack_number_received == ack_number:
+        if self.__last_ack_number_received == ack_number and self.__state != FlowStates.RenoSlowStartPart2:
             self.__num_acks_repeated += 1
-            if self.__num_acks_repeated == self.NUM_ACKS_THRESHOLD - 1:
+            if self.__num_acks_repeated == self.NUM_ACKS_THRESHOLD - 1 and \
+                self.__state != FlowStates.RenoFastRecovery:
                 # Retransmit.
                 self.__fast_recovery_sequence_number = ack_number
                 # Store for when we break out of the repetitions.
                 self.__old_window_size = self.__window_size
                 self.__window_size = self.__window_size / 2 + \
                     self.NUM_ACKS_THRESHOLD - 1
+                self.__state = FlowStates.RenoFastRecovery
+                self.__tcp_sequence_number -= 1
+                # TODO: figure out how long to wait before doing a retransmission.
+                transition_time = self.__controller.get_current_time() + 3.0
+                # Add an event to go into the retransmit state if necessary.
+                self.__controller.add_event(transition_time, self.transition_to_retransmit,
+                                            [self.__tcp_sequence_number, self.__old_window_size / 2])
             elif self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1:
                 self.__window_size += 1
-            return
-        elif ack_number > self.__tcp_sequence_number:
-            self.__tcp_sequence_number = ack_number
 
-        if self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1:
-            self.__window_size = self.__old_window_size / 2
-        else:
-            debug_print(self.__window_size)
-            self.__window_size += 1.0 / self.__window_size
-        self.__num_acks_repeated = 0
+        if ack_number > self.__tcp_sequence_number:
+            self.__tcp_sequence_number = ack_number
+            self.__num_acks_repeated = 0
         self.__last_ack_number_received = ack_number
+
 
     @staticmethod
     def flow_rate_aggregator(values, interval_length):
@@ -235,7 +260,8 @@ class Flow(object):
         debug_print("TODO")
 
     def construct_next_data_packet_reno(self):
-        assert (self.is_infinite_flow() or self.num_remaining_bytes() > 0)
+        if not (self.is_infinite_flow() or self.num_remaining_bytes() > 0):
+            return False
         if self.__state == FlowStates.RenoSlowStartTransition:
             # Don't transmit any more packets until all the remaining ones are
             # timed out.
