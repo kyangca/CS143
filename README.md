@@ -9,6 +9,11 @@
 
 ## Network Simulator
 
+### Prerequisites
+
+* Python 3
+* matplotlib
+
 ### Running the simulator
 
 To run the program:
@@ -25,6 +30,10 @@ This will generate graphs of the flow rate, link rate, buffer occupancy, packet
 loss, and window size.
 
 ## Network Editor
+
+### Prerequisites
+
+* Google Chrome
 
 ### Running the editor
 
