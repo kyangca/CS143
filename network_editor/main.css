@@ -1,0 +1,199 @@
+* {
+  font-family: Helvetica Neue, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+body,
+div,
+span {
+  border: 0 solid black;
+  box-sizing: border-box;
+  position: relative;
+  -webkit-box-align: stretch;
+  -moz-box-align: stretch;
+  -ms-flex-align: stretch;
+  -webkit-align-items: stretch;
+  -moz-align-items: stretch;
+  -ms-align-items: stretch;
+  align-items: stretch;
+  display: -moz-box;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flexbox;
+  display: -ms-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-flex-direction: column;
+  -moz-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-flex-shrink: 0;
+  -moz-flex-shrink: 0;
+  -ms-flex-shrink: 0;
+  flex-shrink: 0;
+}
+.shadow {
+  box-shadow: 0 0 8px #808080;
+}
+#fdg {
+  left: 0;
+  position: fixed;
+  top: 0;
+  z-index: -3;
+}
+.contextmenu {
+  box-shadow: 0 0 8px #808080;
+  background: white;
+  position: fixed;
+  width: 128px;
+}
+.contextmenu .opt {
+  cursor: pointer;
+  padding: 8px;
+}
+.contextmenu .opt:hover {
+  background: #d0d0d0;
+}
+.device,
+.router,
+.host {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  -ms-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  -moz-justify-content: center;
+  -ms-justify-content: center;
+  justify-content: center;
+  box-shadow: 0 0 8px #808080;
+  background: #9fd3ff;
+  cursor: -webkit-grab;
+  margin-left: -32px;
+  margin-top: -32px;
+  position: fixed;
+  transition: box-shadow 0.5s;
+  z-index: -1;
+}
+.device .content {
+  text-align: center;
+}
+.device .content:empty:after {
+  color: #808080;
+  content: "";
+}
+.selecting_device {
+  box-shadow: 0 0 16px green;
+  cursor: pointer;
+}
+.selected_device {
+  box-shadow: 0 0 16px red;
+  cursor: pointer;
+}
+.router {
+  border-radius: 32px;
+  height: 64px;
+  width: 64px;
+}
+.host {
+  height: 64px;
+  width: 64px;
+}
+.link {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  -ms-align-items: center;
+  align-items: center;
+  border-radius: 16px;
+  height: 32px;
+  width: 32px;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  -moz-justify-content: center;
+  -ms-justify-content: center;
+  justify-content: center;
+  background: #d0d0d0;
+  cursor: text;
+  margin-left: -16px;
+  margin-top: -16px;
+  position: fixed;
+  z-index: -2;
+}
+.link .content {
+  text-align: center;
+}
+.link .content:empty:after {
+  color: #808080;
+  content: "";
+}
+#header {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  -ms-align-items: center;
+  align-items: center;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-flex-direction: row;
+  -moz-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  background: #d0d0d0;
+}
+#header > * {
+  margin: 8px 16px;
+}
+#header .title {
+  font-size: 24px;
+}
+#header .button {
+  background: steelblue;
+  color: white;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+.hint {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  -ms-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  -moz-justify-content: center;
+  -ms-justify-content: center;
+  justify-content: center;
+  color: #d0d0d0;
+  font-size: 32px;
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: -4;
+}
+.display_none {
+  display: none;
+}
