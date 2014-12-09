@@ -46,7 +46,7 @@ class Flow(object):
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 2.0
-    FAST_ALPHA = 1.0  # TODO: Adopt .75(B/N) estimate Professor Low suggested.
+    FAST_ALPHA = 3.0  # TODO: Adopt .75(B/N) estimate Professor Low suggested.
     FAST_BASE_RTT = -1 # Start off with a high base RTT.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
@@ -63,6 +63,7 @@ class Flow(object):
         self.__last_ack_number_received = 0
         self.__num_acks_repeated = 0
         self.__window_size = 1.0
+        self.__window_start = 1
         self.__tcp = tcp  # TCP algorithm
         debug_print(tcp)
 
@@ -142,6 +143,7 @@ class Flow(object):
 
     def receive_ack_fast(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
+        self.__last_ack_number_received = ack_number
         rtt = self.__controller.get_current_time() - ack_packet.get_data_time()
         print("BaseRTT is: " + str(self.FAST_BASE_RTT) + ", rtt is: " + str(rtt) + "\n")
         print("Window size was: " + str(self.__window_size))
@@ -250,8 +252,11 @@ class Flow(object):
                 self.__max_contiguous_sequence_number)
 
     def window_is_full(self):
-        return (self.__last_ack_number_received + self.__window_size <=
-            self.__tcp_sequence_number)
+        if(self.__window_start + self.__window_size <= self.__tcp_sequence_number):
+            self.__window_start = self.__window_start + self.__window_size + 1
+            return True
+        else:
+            return False
 
     def construct_next_data_packet(self):
         if self.__tcp == "reno":
@@ -267,6 +272,7 @@ class Flow(object):
             print (self.i, "flow=", self.__flow_id, "remaining bytes=", self.num_remaining_bytes(), \
                    self.__state, "window size=", self.__window_size, "state=", self.__state)#, "ssthresh=", self.__SSthreshold)
         self.i += 1
+        print("Sequence number before construction is: " + str(self.__tcp_sequence_number))
         print("Starting fast data construction")
         if not (self.is_infinite_flow() or self.num_remaining_bytes() > 0):
             return False
@@ -292,6 +298,7 @@ class Flow(object):
             self.__tcp_sequence_number += 1
 
         t = self.__controller.get_current_time()
+        print("Sequence number after construction is: " + str(self.__tcp_sequence_number))
         print("Ending fast data construction")
         return TCPPacket(self.__controller, self.get_src_id(),
                 self.get_dst_id(), user_bytes, packet_type,

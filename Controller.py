@@ -41,7 +41,7 @@ class Controller(object):
         self._debug = options['debug']
         self._current_time = 0.0
         self._log_interval_start = 0.0
-        self._log_interval_length = 2.0
+        self._log_interval_length = .05
         self._event_queue = EventQueue()
 
         self._links = {}
@@ -222,12 +222,18 @@ class Controller(object):
         Args:
             num_seconds: The number of seconds to run the simulation.
         """
+        i = 0
+        c = 0
         while (
             not self._event_queue.is_empty()
             and self.get_current_time() < num_seconds
             and len(self._flows) > 0
         ):
             event = self._event_queue.pop_event()
+            if(i % 1000 == 0 or True):
+                #print("This event is: " + str(c) + ", " + str(event[1]))
+                c = c + 1
+            i = (i + 1) % 1000
             # if self._debug:
             #     # TODO: add better debugging here.
             #     print(event)
@@ -266,7 +272,7 @@ class Controller(object):
             current_subplot += 1
 
         axarr[-1].set_xlabel('time (s)')
-        pyplot.show()
+        pyplot.savefig("plot.png")
 
 
 if __name__ == '__main__':

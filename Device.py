@@ -48,7 +48,7 @@ class Host(Device):
         self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
-        t = self.get_controller().get_current_time() + 3.0
+        t = self.get_controller().get_current_time() + 1.0
         self.get_controller().add_event(t, self.send_next_packet, [flow])
 
         while (not flow.window_is_full()):
