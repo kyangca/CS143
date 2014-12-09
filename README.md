@@ -51,7 +51,10 @@ Firefox, Safari, or Internet Explorer yet.
 ### Usage
 
 The Network Editor is a web application that can be used to create and edit
-networks.
+networks. The Network Editor uses a force-directed graph drawing mechanism in
+order to render the graph in an aesthetically pleasing way. This mechanism is
+done in real-time, so as you add hosts, routers, and links to the graph, the
+whole graph will spring into a nice looking graph automatically.
 
 #### Create hosts
 
@@ -78,13 +81,13 @@ line representing the link, and typing in the name.
 
 Routers are created in the same way as hosts, and are represented by circles.
 
-#### Import
+#### Import JSON
 
 To import a JSON file for a network, click on the "Import" button at the top.
 This will bring up a file dialog, from which you can select the file to import.
 You can try this out with the included test cases under `test_cases`.
 
-#### Export
+#### Export JSON
 
 To export the network to a JSON file, click on the "Export" button at the top.
 This will bring up a file dialog for where you want to save the file.
