@@ -60,6 +60,15 @@ class Link(object):
     def get_controller(self):
         return self.__controller
 
+    def buffer_is_full(self, from_device_id, packet):
+        if (from_device_id == self.__left_device.get_device_id()):
+            buf = self.__rightward_buffer
+        elif (from_device_id == self.__right_device.get_device_id()):
+            buf = self.__leftward_buffer
+        else:
+            raise Exception("Unknown device")
+        return self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size()
+
     @staticmethod
     def link_rate_aggregator(values, interval_length):
         """Returns the average link rate in megabits per second (Mbps)."""
