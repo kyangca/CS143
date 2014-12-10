@@ -140,17 +140,32 @@ class Controller(object):
         self.devices = self._devices
 
     def add_event(self, *args):
+        """Adds an event to the event queue.
+
+        Args:
+            *args: The events the add.
+        """
         self._event_queue.add_event(*args)
 
     def get_current_time(self):
+        """Returns the current time in the network simulation.
+
+        Returns:
+            The current time.
+        """
         return self._current_time
 
     def remove_flow(self, flow):
+        """Removes a flow from the network simulation.
+
+        Args:
+            flow: The flow to remove.
+        """
         self._flows.pop(flow.get_flow_id())
 
     def _process_temp_interval_values(self):
-        """Moves data point into X, Y lists and resets all temp intervals."""
-
+        """Moves data point into X, Y lists and resets all temp intervals.
+        """
         interval_length = min(self._log_interval_length,
             self._current_time - self._log_interval_start)
 
@@ -167,7 +182,8 @@ class Controller(object):
                         aggregated_value = self._logs[log_type] \
                             ['values_aggregator'](temp_values, interval_length)
 
-                        self._new_point(log_type, device_name, time, aggregated_value)
+                        self._new_point(log_type, device_name, time,
+                            aggregated_value)
 
                         device_log['temp_interval_values'] = []
 
@@ -175,14 +191,21 @@ class Controller(object):
             self._log_interval_length) * self._log_interval_length
 
     def _new_point(self, log_type, device_name, x, y):
+        """Creates a new point in the plot and draws.
 
+        Args:
+            log_type: The type of log.
+            device_name: The name of th device for the point.
+            x: The x position of the point.
+            y: The y position of the point.
+        """
         line = self._logs[log_type]['devices'][device_name]['line']
         line.set_xdata(numpy.append(line.get_xdata(), x))
         line.set_ydata(numpy.append(line.get_ydata(), y))
         line.set_label(device_name)
         self._logs[log_type]['subplot'].relim()
         self._logs[log_type]['subplot'].autoscale_view()
-        pyplot.draw() 
+        pyplot.draw()
 
     def log(
         self,
@@ -193,8 +216,6 @@ class Controller(object):
             sum(values) / float(len(values)),
         ylabel=None,
     ):
-        if device_name not in self._show_on_plot:
-            return
         """Logs the data using a given aggregator.
 
         Args:
@@ -205,6 +226,8 @@ class Controller(object):
                 By default, the average aggregator is used.
             ylabel: The label on the y-axis. By default, the log type is used.
         """
+        if device_name not in self._show_on_plot:
+            return
         if ylabel is None:
             ylabel = log_type
 
@@ -223,7 +246,8 @@ class Controller(object):
             self._logs[log_type]['devices'][device_name] = {
                 'temp_interval_values': [],
             }
-            self._logs[log_type]['devices'][device_name]['line'], = self._logs[log_type]['subplot'].plot([], [], label=device_name)
+            self._logs[log_type]['devices'][device_name]['line'], = \
+                self._logs[log_type]['subplot'].plot([], [], label=device_name)
 
         if (self._current_time - self._log_interval_length >=
                 self._log_interval_start):
@@ -233,6 +257,8 @@ class Controller(object):
             .append(value)
 
     def init_graphing(self):
+        """Initializes the graphing functionality.
+        """
         pyplot.ion()
 
         subplots = (
@@ -283,4 +309,7 @@ if __name__ == '__main__':
 
     network_controller.init_graphing()
     network_controller.run(float('inf'))
+
+    # This is necessary since otherwise the graph window disappears after the
+    # simulation finishes.
     input()
