@@ -5,10 +5,17 @@ from Device import Host, Router
 from EventQueue import EventQueue
 from Flow import Flow
 from Link import Link
+import matplotlib
 from matplotlib import pyplot
 from optparse import OptionParser
 import json
 import numpy
+
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 9}
+
+matplotlib.rc('font', **font)
 
 class Controller(object):
     """The main controller class.
@@ -42,7 +49,10 @@ class Controller(object):
         self._debug = options['debug']
         self._current_time = 0.0
         self._log_interval_start = 0.0
-        self._log_interval_length = 1.0
+        if 'log_interval_length' in options:
+            self._log_interval_length = float(options['log_interval_length'])
+        else:
+            self._log_interval_length = 1.0
         self._event_queue = EventQueue()
 
         self._links = {}
@@ -202,7 +212,6 @@ class Controller(object):
         line = self._logs[log_type]['devices'][device_name]['line']
         line.set_xdata(numpy.append(line.get_xdata(), x))
         line.set_ydata(numpy.append(line.get_ydata(), y))
-        line.set_label(device_name)
         self._logs[log_type]['subplot'].relim()
         self._logs[log_type]['subplot'].autoscale_view()
         pyplot.draw()
@@ -248,6 +257,7 @@ class Controller(object):
             }
             self._logs[log_type]['devices'][device_name]['line'], = \
                 self._logs[log_type]['subplot'].plot([], [], label=device_name)
+            self._logs[log_type]['subplot'].legend(bbox_to_anchor=(1.1, 1.0))
 
         if (self._current_time - self._log_interval_length >=
                 self._log_interval_start):
@@ -300,6 +310,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-f", "--file", dest="filename",
         help="Test json filename (e.g. test0.json)")
+    parser.add_option("-i", "--interval", dest="log_interval_length",
+        help="Log interval length as float > 0.0")
     parser.add_option("-q", "--quiet", action="store_false", dest="verbose",
         default=True, help="don't print status messages to stdout")
     parser.add_option("--debug", action="store_true")
