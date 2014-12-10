@@ -212,8 +212,10 @@ class Controller(object):
         line = self._logs[log_type]['devices'][device_name]['line']
         line.set_xdata(numpy.append(line.get_xdata(), x))
         line.set_ydata(numpy.append(line.get_ydata(), y))
+        self._logs[log_type]['subplot'].set_ymargin(0.05)
         self._logs[log_type]['subplot'].relim()
         self._logs[log_type]['subplot'].autoscale_view()
+        self._logs[log_type]['subplot'].set_ylim(bottom=0, auto=True)
         pyplot.draw()
 
     def log(
@@ -285,6 +287,7 @@ class Controller(object):
             self._logs[subplot]['subplot'] = axarr[index]
 
         axarr[-1].set_xlabel('time (s)')
+        pyplot.autoscale()
 
     def run(self, num_seconds):
         """Runs the simulation.
