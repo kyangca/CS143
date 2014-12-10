@@ -125,9 +125,17 @@ class Link(object):
     def packet_loss_aggregator(values, interval_length):
         return int(sum(values))
 
+    def buffer_is_full(self, from_device_id, packet):
+        if (from_device_id == self.__left_device.get_device_id()):
+            buf = self.__rightward_buffer
+        elif (from_device_id == self.__right_device.get_device_id()):
+            buf = self.__leftward_buffer
+        else:
+            raise Exception("Unknown device")
+        return self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size()
+
     def queue_packet(self, from_device_id, packet):
         """Queues a packet. Returns whether or not the request was successful.
-
         Args:
             from_device_id: The originating device of the packet.
             packet: The packet object.

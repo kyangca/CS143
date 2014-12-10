@@ -31,7 +31,7 @@
       "dst_id": "H2",
       "num_bytes": 20000000,
       "start_time": 1,
-      "tcp": "fast",
+      "tcp": "reno",
       "show_on_plot": true
     }
   ],
