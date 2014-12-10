@@ -8,6 +8,7 @@ from Link import Link
 from matplotlib import pyplot
 from optparse import OptionParser
 import json
+import numpy
 
 class Controller(object):
     """The main controller class.
@@ -154,24 +155,34 @@ class Controller(object):
             self._current_time - self._log_interval_start)
 
         for log_type in self._logs:
-            devices_logs = self._logs[log_type]['devices']
+            if 'devices' in self._logs[log_type]:
+                devices_logs = self._logs[log_type]['devices']
 
-            for device_name in devices_logs:
-                device_log = self._logs[log_type]['devices'][device_name]
+                for device_name in devices_logs:
+                    device_log = self._logs[log_type]['devices'][device_name]
 
-                temp_values = device_log['temp_interval_values']
-                if temp_values:
-                    time = self._log_interval_start + interval_length / 2.0
-                    aggregated_value = self._logs[log_type] \
-                        ['values_aggregator'](temp_values, interval_length)
+                    temp_values = device_log['temp_interval_values']
+                    if temp_values:
+                        time = self._log_interval_start + interval_length / 2.0
+                        aggregated_value = self._logs[log_type] \
+                            ['values_aggregator'](temp_values, interval_length)
 
-                    device_log['X'].append(time)
-                    device_log['Y'].append(aggregated_value)
+                        self._new_point(log_type, device_name, time, aggregated_value)
 
-                    device_log['temp_interval_values'] = []
+                        device_log['temp_interval_values'] = []
 
         self._log_interval_start = int(self._current_time /
             self._log_interval_length) * self._log_interval_length
+
+    def _new_point(self, log_type, device_name, x, y):
+
+        line = self._logs[log_type]['devices'][device_name]['line']
+        line.set_xdata(numpy.append(line.get_xdata(), x))
+        line.set_ydata(numpy.append(line.get_ydata(), y))
+        line.set_label(device_name)
+        self._logs[log_type]['subplot'].relim()
+        self._logs[log_type]['subplot'].autoscale_view()
+        pyplot.draw() 
 
     def log(
         self,
@@ -182,6 +193,8 @@ class Controller(object):
             sum(values) / float(len(values)),
         ylabel=None,
     ):
+        if device_name not in self._show_on_plot:
+            return
         """Logs the data using a given aggregator.
 
         Args:
@@ -195,19 +208,22 @@ class Controller(object):
         if ylabel is None:
             ylabel = log_type
 
-        if log_type not in self._logs:
-            self._logs[log_type] = {
-                'devices': {},
-                'ylabel': ylabel,
-                'values_aggregator': values_aggregator,
-            }
+        assert(log_type in self._logs)
+        if 'devices' not in self._logs[log_type]:
+            self._logs[log_type]['devices'] = {}
+            self._logs[log_type]['values_aggregator'] = values_aggregator
+            self._logs[log_type]['min_y'] = 0.0
+            self._logs[log_type]['max_y'] = 1.0
+            self._logs[log_type]['min_x'] = 0.0
+            self._logs[log_type]['max_x'] = 15.0
+            self._logs[log_type]['ylabel'] = ylabel
+            self._logs[log_type]['subplot'].set_ylabel(ylabel)
 
         if device_name not in self._logs[log_type]['devices']:
             self._logs[log_type]['devices'][device_name] = {
                 'temp_interval_values': [],
-                'X': [],
-                'Y': [],
             }
+            self._logs[log_type]['devices'][device_name]['line'], = self._logs[log_type]['subplot'].plot([], [], label=device_name)
 
         if (self._current_time - self._log_interval_length >=
                 self._log_interval_start):
@@ -215,6 +231,24 @@ class Controller(object):
 
         self._logs[log_type]['devices'][device_name]['temp_interval_values'] \
             .append(value)
+
+    def init_graphing(self):
+        pyplot.ion()
+
+        subplots = (
+            'flow-rate',
+            'window-size',
+            'link-rate',
+            'buffer-occupancy',
+            'packet-loss'
+        )
+        f, axarr = pyplot.subplots(len(subplots), sharex=True)
+
+        for index, subplot in enumerate(subplots):
+            self._logs[subplot] = {}
+            self._logs[subplot]['subplot'] = axarr[index]
+
+        axarr[-1].set_xlabel('time (s)')
 
     def run(self, num_seconds):
         """Runs the simulation.
@@ -235,42 +269,6 @@ class Controller(object):
             self._current_time = event_time
             event_method(*event_args)
 
-    def plot(self):
-        """Plots the logged data."""
-        self._process_temp_interval_values()
-
-        num_subplots = len(self._logs)
-
-        if num_subplots == 1:
-            f, ax = pyplot.subplots(num_subplots, sharex=True)
-            axarr = [ax]
-        elif num_subplots > 1:
-            f, axarr = pyplot.subplots(num_subplots, sharex=True)
-
-        current_subplot = 0
-
-        for log_type in ('flow-rate', 'window-size', 'link-rate', 'buffer-occupancy', 'packet-loss'):
-            if log_type not in self._logs:
-                continue
-
-            device_logs = network_controller._logs[log_type]['devices']
-
-            for device_name in device_logs:
-                if device_name in self._show_on_plot:
-                    device_log = network_controller._logs[log_type]['devices'] \
-                        [device_name]
-
-                    X = device_log['X']
-                    Y = device_log['Y']
-                    axarr[current_subplot].plot(X, Y, label=device_name)
-                    axarr[current_subplot].set_ylabel(network_controller \
-                        ._logs[log_type]['ylabel'])
-            axarr[current_subplot].legend()
-            current_subplot += 1
-
-        axarr[-1].set_xlabel('time (s)')
-        pyplot.show()
-
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -282,6 +280,7 @@ if __name__ == '__main__':
     options, _ = parser.parse_args()
 
     network_controller = Controller(vars(options))
-    network_controller.run(float('inf'))
 
-    network_controller.plot()
+    network_controller.init_graphing()
+    network_controller.run(float('inf'))
+    input()
