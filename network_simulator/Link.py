@@ -60,14 +60,14 @@ class Link(object):
     def get_controller(self):
         return self.__controller
 
-    def buffer_is_full(self, from_device_id, packet):
+    def buffer_is_full(self, from_device_id, packet_size):
         if (from_device_id == self.__left_device.get_device_id()):
             buf = self.__rightward_buffer
         elif (from_device_id == self.__right_device.get_device_id()):
             buf = self.__leftward_buffer
         else:
             raise Exception("Unknown device")
-        return self.__buffer_size - self.bytes_in_buffer(buf) < packet.get_size()
+        return self.__buffer_size - self.bytes_in_buffer(buf) < packet_size
 
     @staticmethod
     def link_rate_aggregator(values, interval_length):
@@ -85,6 +85,8 @@ class Link(object):
         else:
             packet = self.__leftward_buffer.pop(0)
             device = self.__left_device
+
+#        print("Link.packet_on_wire_handler", packet.get_src_id(), "-->", packet.get_dst_id(), "ack =", packet.get_ack_number(), "seq =", packet.get_sequence_number(), "time =", self.get_controller().get_current_time())
 
         self.__controller.log(
             "link-rate",
@@ -202,6 +204,9 @@ class Link(object):
                 self.packet_on_wire_handler, [True])
         else:
             self.__next_leftward_start_transmission_time += transmission_time
+#            if (packet.is_TCP_ack()):
+#                print("Link.queue_packet", "sending ack", "transmission_time =", \
+#                      self.__next_leftward_start_transmission_time)
             self.__next_rightward_start_transmission_time = \
                 self.__next_leftward_start_transmission_time + \
                 self.get_link_delay()

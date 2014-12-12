@@ -43,7 +43,7 @@ class Flow(object):
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 1.0
-    FAST_ALPHA = 3.0
+    FAST_ALPHA = 10.0
     FAST_BASE_RTT = -1 # -1 indicates no base RTT recorded yet.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
@@ -60,7 +60,7 @@ class Flow(object):
         self.__last_ack_number_received = 0
         self.__num_acks_repeated = 0
         self.__window_size = 1.0
-        self.__window_start = 1
+        self.__window_start = 0
         self.__tcp = tcp  # TCP algorithm
         debug_print(tcp)
 
@@ -149,6 +149,7 @@ class Flow(object):
             self.__window_size = (self.FAST_BASE_RTT/rtt)*self.__window_size + self.FAST_ALPHA
             if(self.FAST_BASE_RTT > rtt):
                 self.FAST_BASE_RTT = rtt
+        print("Flow.receive_ack_fast", "rtt =", rtt, "base_rtt =", self.FAST_BASE_RTT, "window size =", self.__window_size, "alpha =", self.FAST_ALPHA, "time =", self.__controller.get_current_time())
 
     def receive_ack_reno(self, ack_packet):
         ack_number = ack_packet.get_ack_number()

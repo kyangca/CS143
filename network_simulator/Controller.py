@@ -11,7 +11,7 @@ from optparse import OptionParser
 import json
 import numpy
 
-font = {'family' : 'normal',
+font = {
         'weight' : 'bold',
         'size'   : 9}
 
