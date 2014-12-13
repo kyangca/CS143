@@ -133,11 +133,17 @@ class Flow(object):
 
     def receive_ack_fast(self, ack_packet):
         ack_number = ack_packet.get_ack_number()
+        if (self.__last_ack_number_received == ack_number):
+            self.__num_acks_repeated += 1
+            if self.__num_acks_repeated == self.NUM_ACKS_THRESHOLD - 1:
+                # Go back N
+                self.__tcp_sequence_number = ack_number
         self.__last_ack_number_received = ack_number
-        # TODO: handle errors.
+
         if (ack_number > self.__window_start):
-            # Slide the window.
+            # Slide the window upon receipt of an ack above the window_start variable.
             self.__window_start = ack_number
+
         rtt = self.__controller.get_current_time() - ack_packet.get_data_time()
         if(self.FAST_BASE_RTT == -1):
             self.__window_size = self.__window_size + self.FAST_ALPHA
