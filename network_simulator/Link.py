@@ -86,11 +86,6 @@ class Link(object):
             packet = self.__leftward_buffer.pop(0)
             device = self.__left_device
 
-        # print("Link.packet_on_wire_handler", packet.get_src_id(), "-->",
-        #     packet.get_dst_id(), "ack =", packet.get_ack_number(), "seq =",
-        #     packet.get_sequence_number(), "time =",
-        #     self.get_controller().get_current_time())
-
         self.__controller.log(
             "link-rate",
             self.__link_id,
@@ -105,17 +100,9 @@ class Link(object):
             [self, packet],
         )
 
-        # if packet.is_TCP_packet():
-        #     print (packet, self.get_link_id(), "sequence # = ",
-        #         packet.get_sequence_number(),
-        #            "ack # = ", packet.get_ack_number(), "t =",
-        #            self.get_controller().get_current_time())
-        # else:
-        #     print ("Running BF", self.get_link_id())
-
     def opposite_device(self, from_device_id):
         """I assume that routers can know what device is on the other end of the
-        router. TODO: Ask Jianchi to make sure this is correct."""
+        router."""
         if from_device_id == self.__left_device.get_device_id():
             return self.__right_device
         elif from_device_id == self.__right_device.get_device_id():
@@ -208,9 +195,6 @@ class Link(object):
                 self.packet_on_wire_handler, [True])
         else:
             self.__next_leftward_start_transmission_time += transmission_time
-            # if packet.is_TCP_ack():
-            #     print("Link.queue_packet", "sending ack", "transmission_time =",
-            #         self.__next_leftward_start_transmission_time)
             self.__next_rightward_start_transmission_time = \
                 self.__next_leftward_start_transmission_time + \
                 self.get_link_delay()

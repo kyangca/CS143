@@ -67,7 +67,6 @@ class Flow(object):
         self.__SSthreshold = float('inf')
         if tcp == "reno":
             self.__state = FlowStates.RenoSlowStartPart1
-            debug_print("in reno")
         elif tcp == "fast":
             self.__state = FlowStates.Fast
         else:
@@ -106,8 +105,6 @@ class Flow(object):
     def transition_to_retransmit(self, next_tcp_sequence_number, SSthreshold):
         # If this condition isn't satisfied, then FR worked.
         if next_tcp_sequence_number > self.__last_ack_number_received:
-            # print("Retransmitting flow", self.__flow_id, "ssthresh=",
-            #     SSthreshold)
             # Transition into slow start.
             self.__SSthreshold = SSthreshold
             self.__window_size = 1.0
@@ -153,12 +150,8 @@ class Flow(object):
                 self.FAST_ALPHA
             if(self.FAST_BASE_RTT > rtt):
                 self.FAST_BASE_RTT = rtt
-        print("Flow.receive_ack_fast", "rtt =", rtt, "base_rtt =",
-            self.FAST_BASE_RTT, "window size =", self.__window_size, "alpha =",
-            self.FAST_ALPHA, "time =", self.__controller.get_current_time())
 
     def handle_reno_SS1(self, ack_number):
-        print("SS1", self.__window_size)
         if self.__last_ack_number_received == ack_number:
             self.__SSthreshold = self.__window_size / 2
             self.__window_size = 1.0
@@ -168,13 +161,10 @@ class Flow(object):
             self.__window_size += 1
 
     def handle_reno_SS2(self, ack_number):
-        print ("SS2")
-#        assert (ack_number != self.__last_ack_number_received)
         if self.__window_size < self.__SSthreshold:
             self.__window_size += 1
         else:
             self.__state = FlowStates.RenoCA
-        print(self.__window_size)
 
     def handle_duplicate_ack(self, ack_number):
         if self.__last_ack_number_received == ack_number:
@@ -187,21 +177,17 @@ class Flow(object):
                 self.__window_size = self.__window_size / 2 + \
                     self.NUM_ACKS_THRESHOLD - 1
                 self.__state = FlowStates.RenoFastRecovery
-                # print("Fast recovery, flow=", self.__flow_id,
-                #     "old window size = ", self.__old_window_size)
                 self.__tcp_sequence_number -= 1
                 # TODO: figure out how long to wait before doing a
                 # retransmission.
                 transition_time = self.__controller.get_current_time() + \
                                   self.FAST_RECOVERY_RETRANSMIT_TIME
-                print("set")
                 # Add an event to go into the retransmit state if necessary.
                 self.__controller.add_event(transition_time,
                     self.transition_to_retransmit, [self.__tcp_sequence_number,
                     self.__old_window_size / 2])
 
     def handle_reno_FR(self, ack_number):
-        print("FR", self.__num_acks_repeated, ack_number)
         if self.__last_ack_number_received == ack_number:
             self.__num_acks_repeated += 1
             if self.__num_acks_repeated > self.NUM_ACKS_THRESHOLD - 1:
@@ -212,7 +198,6 @@ class Flow(object):
             self.__num_acks_repeated = 0
 
     def handle_reno_CA(self, ack_number):
-        print ("CA", self.__window_size)
         self.__window_size += 1.0 / self.__window_size
         self.handle_duplicate_ack(ack_number)
 
@@ -301,15 +286,6 @@ class Flow(object):
                          sequence_number, ack_number, self.get_flow_id(), t, t)
 
     def construct_next_data_packet_reno(self):
-
-        if self.i % 100 == 0:
-            # print (self.i, "flow=", self.__flow_id, "remaining bytes=",
-            #     self.num_remaining_bytes(), self.__state, "window size=",
-            #     self.__window_size, "state=", self.__state, "ssthresh=",
-            #     self.__SSthreshold)
-            pass
-        self.i += 1
-
         if not (self.is_infinite_flow() or self.num_remaining_bytes() > 0):
             return False
         user_bytes = min(self.DATA_MAX_PACKET_SIZE, self.num_remaining_bytes())

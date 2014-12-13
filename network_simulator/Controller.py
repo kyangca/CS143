@@ -304,9 +304,6 @@ class Controller(object):
             and len(self._flows) > 0
         ):
             event = self._event_queue.pop_event()
-            # if self._debug:
-            #     # TODO: add better debugging here.
-            #     print(event)
             event_time, event_method, event_args = event
             self._current_time = event_time
             event_method(*event_args)

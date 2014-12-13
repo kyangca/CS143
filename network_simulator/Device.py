@@ -54,11 +54,6 @@ class Host(Device):
             # This operation fails if e.g. we're waiting for the network to
             # clear.
             if packet:
-                print("Device.send_next_packet_fast", packet.get_src_id(),
-                    "-->", packet.get_dst_id(), "ack =",
-                    packet.get_ack_number(), "seq =",
-                    packet.get_sequence_number(), "time =",
-                    self.get_controller().get_current_time())
                 self.get_link().queue_packet(self.get_device_id(), packet)
                 if (not flow.is_infinite_flow() and flow.num_remaining_bytes()
                         <= 0):
@@ -74,9 +69,6 @@ class Host(Device):
         if not packet.is_TCP_packet():
             raise Exception("Faulty packet received.")
 
-        # print("Device.receive_packet", "host_id =", self._device_id, "ack =",
-        #     packet.get_ack_number(), "seq =", packet.get_sequence_number())
-
         sequence_number = packet.get_sequence_number()
         sending_device = packet.get_src_id()
         flow_id = packet.get_flow_id()
@@ -90,10 +82,6 @@ class Host(Device):
         if packet.is_TCP_ack():
             # Update the flow state with the received ack packet.
             self._flows[flow_id].receive_ack(packet)
-            print("Device.receive_packet.received_an_ack", packet.get_src_id(),
-                "-->", packet.get_dst_id(), "ack =", packet.get_ack_number(),
-                "seq =", packet.get_sequence_number(), "time =",
-                self.get_controller().get_current_time())
         else:
             # Update the flow state with the received data packet.
             self._flows[flow_id].receive_data(packet)
