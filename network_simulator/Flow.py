@@ -38,7 +38,7 @@ class Flow(object):
             'fast'.
     """
 
-    NUM_ACKS_THRESHOLD = 3
+    NUM_ACKS_THRESHOLD = 5
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 1.0
