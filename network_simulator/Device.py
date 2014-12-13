@@ -48,33 +48,8 @@ class Host(Device):
         self._flows[flow_id] = flow
 
     def send_next_packet(self, flow):
-        if(flow.get_tcp_algorithm() == "reno"):
-            self.send_next_packet_reno(flow)
-        else:
-            self.send_next_packet_fast(flow)
-
-    def send_next_packet_reno(self, flow):
-        t = self.get_controller().get_current_time() + 3.0
-        self.get_controller().add_event(t, self.send_next_packet, [flow])
-        while (not flow.window_is_full()):
-            packet = flow.construct_next_data_packet()
-            # This operation fails if e.g. we're waiting for the network to
-            # clear.
-            if packet:
-                if (not self.get_link().queue_packet(self.get_device_id(),
-                        packet)):
-                    pass
-
-                if flow.is_infinite_flow() or flow.num_remaining_bytes() > 0:
-                    continue
-                else:
-                    self.get_controller().remove_flow(flow)
-                    return
-            return
-
-    def send_next_packet_fast(self, flow):
-        if (not flow.window_is_full() and not \
-            self.get_link().buffer_is_full(self.get_device_id(), 1024)):
+        if (not self.get_link().buffer_is_full(self.get_device_id(), 1024) \
+            and not flow.window_is_full()):
             packet = flow.construct_next_data_packet()
             # This operation fails if e.g. we're waiting for the network to
             # clear.
@@ -92,7 +67,7 @@ class Host(Device):
                     return
         t = self.get_controller().get_current_time() + \
             (1024.0 / self.get_link().get_throughput())
-        self.get_controller().add_event(t, self.send_next_packet_fast, [flow])
+        self.get_controller().add_event(t, self.send_next_packet, [flow])
 
 
     def receive_packet(self, sending_link, packet):
