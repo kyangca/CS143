@@ -1,0 +1,131 @@
+{
+  "routers": [
+    {
+      "id": "R1",
+      "links": [
+        "L0",
+        "L1",
+        "L2"
+      ],
+      "routing_table": {
+        "H1": "L0",
+        "H2": "L1"
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R2",
+      "links": [
+        "L1",
+        "L3"
+      ],
+      "routing_table": {
+        "H1": "L1",
+        "H2": "L3"
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R3",
+      "links": [
+        "L2",
+        "L4"
+      ],
+      "routing_table": {
+        "H1": "L2",
+        "H2": "L4"
+      },
+      "BFfreq": 1
+    },
+    {
+      "id": "R4",
+      "links": [
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "routing_table": {
+        "H1": "L3",
+        "H2": "L5"
+      },
+      "BFfreq": 1
+    }
+  ],
+  "hosts": [
+    {
+      "id": "H1",
+      "links": [
+        "L0"
+      ]
+    },
+    {
+      "id": "H2",
+      "links": [
+        "L5"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "id": "L0",
+      "left_device_id": "H1",
+      "right_device_id": "R1",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 64000
+    },
+    {
+      "id": "L1",
+      "left_device_id": "R1",
+      "right_device_id": "R2",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 64000,
+      "show_on_plot": true
+    },
+    {
+      "id": "L2",
+      "left_device_id": "R1",
+      "right_device_id": "R3",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 64000,
+      "show_on_plot": true
+    },
+    {
+      "id": "L3",
+      "left_device_id": "R2",
+      "right_device_id": "R4",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 64000
+    },
+    {
+      "id": "L4",
+      "left_device_id": "R3",
+      "right_device_id": "R4",
+      "throughput": 10000000,
+      "link_delay": 0.01,
+      "buffer_size": 64000
+    },
+    {
+      "id": "L5",
+      "left_device_id": "R4",
+      "right_device_id": "H2",
+      "throughput": 12500000,
+      "link_delay": 0.01,
+      "buffer_size": 64000
+    }
+  ],
+  "flows": [
+    {
+      "id": "F1",
+      "src_id": "H1",
+      "dst_id": "H2",
+      "num_bytes": 20000000,
+      "start_time": 0.5,
+      "tcp": "reno",
+      "show_on_plot": true
+    }
+  ]
+}
