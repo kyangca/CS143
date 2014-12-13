@@ -44,7 +44,7 @@ class Flow(object):
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 1.0
     FAST_ALPHA = 0.5
-    FAST_BASE_RTT = -1 # -1 indicates no base RTT recorded yet.
+    FAST_BASE_RTT = -1  # -1 indicates no base RTT recorded yet.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
     def __init__(self, controller, src_id, dst_id, flow_id, tcp="reno",
