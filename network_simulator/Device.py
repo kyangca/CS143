@@ -38,7 +38,6 @@ class Host(Device):
         assert (len(links) == 1)
         super().__init__(controller, links, device_id)
         # _flows is a map from device id values to flow
-        # TODO: figure out if we need to include port numbers.
         self._flows = {}
 
     def get_link(self):
@@ -74,7 +73,6 @@ class Host(Device):
         flow_id = packet.get_flow_id()
         if flow_id not in self._flows:
             # Add the new flow to the host's _flows collection.
-            # TODO: figure out where to get flow numbers.
             flow = Flow(self._controller, sending_device, self.get_device_id(),
                 flow_id)
             self.add_flow(flow_id, flow)
@@ -137,7 +135,6 @@ class Router(Device):
             is_host = isinstance(opposite_device, Host)
             if link == mapped_link or is_host:
                 continue
-            # TODO: Use correct packet sizes.
             update_packet = BFPacket(self.get_controller(),
                 self.get_device_id(), None, 1024, host_id, cost)
             link.queue_packet(self.get_device_id(), update_packet)
@@ -154,7 +151,6 @@ class Router(Device):
 
         for link_id, link in self.get_links().items():
             opposite_device = link.opposite_device(self.get_device_id())
-            # TODO: consider adding fields so we don't need to use this.
             if not isinstance(opposite_device, Host):
                 continue
             host_id = opposite_device.get_device_id()

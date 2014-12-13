@@ -112,8 +112,7 @@ class Link(object):
 
     def estimate_cost(self, from_device_id):
         """Returns the estimated amount of time that will be required to send a
-        packet from the given attached device across this link. TODO: Ask
-        Jianchi how to do correct calculations."""
+        packet from the given attached device across this link."""
         if from_device_id == self.__left_device.get_device_id():
             return max(0, self.__next_rightward_start_transmission_time -
                        self.get_controller().get_current_time())

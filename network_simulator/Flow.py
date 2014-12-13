@@ -13,7 +13,6 @@ class FlowStates(object):
     RenoSlowStartPart1 = 0
     RenoSlowStartPart2 = 1
     RenoFastRecovery = 2
-    # TODO: Generalize Flow so it uses state transitions more effectively.
     RenoCA = 3
     Fast = 4
 
@@ -80,7 +79,6 @@ class Flow(object):
         # then __max_contiguous_sequence_number = 3,
         # __uncounted_sequence_numbers = [7,8]
         self.__max_contiguous_sequence_number = -1  # Nothing received yet.
-        # TODO: Consider using an alternative data structure.
         self.__uncounted_sequence_numbers = {}
 
     # Returns whether or not the flow should continue ad infinitum.
@@ -178,8 +176,6 @@ class Flow(object):
                     self.NUM_ACKS_THRESHOLD - 1
                 self.__state = FlowStates.RenoFastRecovery
                 self.__tcp_sequence_number -= 1
-                # TODO: figure out how long to wait before doing a
-                # retransmission.
                 transition_time = self.__controller.get_current_time() + \
                                   self.FAST_RECOVERY_RETRANSMIT_TIME
                 # Add an event to go into the retransmit state if necessary.
