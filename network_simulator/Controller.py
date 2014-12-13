@@ -49,7 +49,8 @@ class Controller(object):
         self._debug = options['debug']
         self._current_time = 0.0
         self._log_interval_start = 0.0
-        if 'log_interval_length' in options:
+        if ('log_interval_length' in options and options['log_interval_length']
+                is not None):
             self._log_interval_length = float(options['log_interval_length'])
         else:
             self._log_interval_length = 1.0

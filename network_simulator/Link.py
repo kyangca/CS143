@@ -61,9 +61,9 @@ class Link(object):
         return self.__controller
 
     def buffer_is_full(self, from_device_id, packet_size):
-        if (from_device_id == self.__left_device.get_device_id()):
+        if from_device_id == self.__left_device.get_device_id():
             buf = self.__rightward_buffer
-        elif (from_device_id == self.__right_device.get_device_id()):
+        elif from_device_id == self.__right_device.get_device_id():
             buf = self.__leftward_buffer
         else:
             raise Exception("Unknown device")
@@ -86,7 +86,10 @@ class Link(object):
             packet = self.__leftward_buffer.pop(0)
             device = self.__left_device
 
-#        print("Link.packet_on_wire_handler", packet.get_src_id(), "-->", packet.get_dst_id(), "ack =", packet.get_ack_number(), "seq =", packet.get_sequence_number(), "time =", self.get_controller().get_current_time())
+        # print("Link.packet_on_wire_handler", packet.get_src_id(), "-->",
+        #     packet.get_dst_id(), "ack =", packet.get_ack_number(), "seq =",
+        #     packet.get_sequence_number(), "time =",
+        #     self.get_controller().get_current_time())
 
         self.__controller.log(
             "link-rate",
@@ -103,7 +106,8 @@ class Link(object):
         )
 
         # if packet.is_TCP_packet():
-        #     print (packet, self.get_link_id(), "sequence # = ", packet.get_sequence_number(),
+        #     print (packet, self.get_link_id(), "sequence # = ",
+        #         packet.get_sequence_number(),
         #            "ack # = ", packet.get_ack_number(), "t =",
         #            self.get_controller().get_current_time())
         # else:
@@ -204,9 +208,9 @@ class Link(object):
                 self.packet_on_wire_handler, [True])
         else:
             self.__next_leftward_start_transmission_time += transmission_time
-#            if (packet.is_TCP_ack()):
-#                print("Link.queue_packet", "sending ack", "transmission_time =", \
-#                      self.__next_leftward_start_transmission_time)
+            # if packet.is_TCP_ack():
+            #     print("Link.queue_packet", "sending ack", "transmission_time =",
+            #         self.__next_leftward_start_transmission_time)
             self.__next_rightward_start_transmission_time = \
                 self.__next_leftward_start_transmission_time + \
                 self.get_link_delay()
