@@ -12,8 +12,9 @@ import json
 import numpy
 
 font = {
-        'weight' : 'bold',
-        'size'   : 9}
+  'weight': 'bold',
+  'size'  : 9
+}
 
 matplotlib.rc('font', **font)
 
