@@ -43,7 +43,7 @@ class Flow(object):
     ACK_PACKET_SIZE = 64
     DATA_MAX_PACKET_SIZE = 1024
     RENO_SLOW_START_TIMEOUT = 1.0
-    FAST_ALPHA = 3.0
+    FAST_ALPHA = 0.5
     FAST_BASE_RTT = -1 # -1 indicates no base RTT recorded yet.
 
     # num_bytes = None specifies that the flow should continue ad infinitum.
@@ -104,6 +104,7 @@ class Flow(object):
         return self.__tcp
 
     def transition_to_slow_start_part_2(self):
+        print("ft")
         debug_print("Transitioned to reno state 2")
         self.__state = FlowStates.RenoSlowStartPart2
         debug_print(self.__tcp_sequence_number)
@@ -142,7 +143,8 @@ class Flow(object):
         ack_number = ack_packet.get_ack_number()
         self.__last_ack_number_received = ack_number
         # TODO: handle errors.
-        if (ack_number >= self.__window_start + self.__window_size):
+        if (ack_number > self.__window_start):
+            # Slide the window.
             self.__window_start = ack_number
         rtt = self.__controller.get_current_time() - ack_packet.get_data_time()
         if(self.FAST_BASE_RTT == -1):

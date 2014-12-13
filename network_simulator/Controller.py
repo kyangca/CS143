@@ -76,11 +76,12 @@ class Controller(object):
 
         for json_link in json_links:
             link_id = json_link['id']
+            # Throughputs are in Mbps; need to convert to MBps.
             self._links[link_id] = Link(
                 controller=self,
                 left_device=None,
                 right_device=None,
-                throughput=json_link['throughput'],
+                throughput=float(json_link['throughput']) / 8,
                 link_delay=json_link['link_delay'],
                 buffer_size=json_link['buffer_size'],
                 link_id=link_id,
