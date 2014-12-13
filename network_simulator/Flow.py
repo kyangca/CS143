@@ -113,7 +113,7 @@ class Flow(object):
 
     def transition_to_retransmit(self, next_tcp_sequence_number, SSthreshold):
         # If this condition isn't satisfied, then FR worked.
-        if (next_tcp_sequence_number > self.__last_ack_number_received):
+        if next_tcp_sequence_number > self.__last_ack_number_received:
             # print("Retransmitting flow", self.__flow_id, "ssthresh=",
             #     SSthreshold)
             # Transition into slow start.
@@ -143,7 +143,7 @@ class Flow(object):
         ack_number = ack_packet.get_ack_number()
         self.__last_ack_number_received = ack_number
         # TODO: handle errors.
-        if (ack_number >= self.__window_start + self.__window_size):
+        if ack_number >= self.__window_start + self.__window_size:
             self.__window_start = ack_number
         rtt = self.__controller.get_current_time() - ack_packet.get_data_time()
         if(self.FAST_BASE_RTT == -1):
@@ -230,7 +230,7 @@ class Flow(object):
         if ack_number > self.__tcp_sequence_number:
             self.__tcp_sequence_number = ack_number
             self.__num_acks_repeated = 0
-#        if (ack_number != self.__last_ack_number_received):
+#        if ack_number != self.__last_ack_number_received:
 #            self.__num_acks_repeated = 0
         self.__last_ack_number_received = ack_number
 
@@ -304,7 +304,7 @@ class Flow(object):
 
     def construct_next_data_packet_reno(self):
 
-        if (self.i % 100 == 0):
+        if self.i % 100 == 0:
             # print (self.i, "flow=", self.__flow_id, "remaining bytes=",
             #     self.num_remaining_bytes(), self.__state, "window size=",
             #     self.__window_size, "state=", self.__state, "ssthresh=",
